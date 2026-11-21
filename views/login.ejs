@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <style>
+        body {
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            text-align: center;
+        }
+
+        .form-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .form-row label {
+            width: 100px;
+            text-align: right;
+            margin-right: 8px;
+        }
+
+        .form-row input {
+            width: 200px;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Second-hand Trading Platform</h1>
+
+    <div class="login-box">
+        <h2>Login Page</h2>
+
+        <form action="/doLogin" method="post">
+            <div class="form-row">
+                <label>Username:</label>
+                <input type="text" name="username">
+            </div>
+
+            <div class="form-row">
+                <label>Password:</label>
+                <input type="password" name="password">
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <p><a href="/register">Go to Register</a></p>
+    </div>
+</body>
+</html>
