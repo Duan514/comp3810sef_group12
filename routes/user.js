@@ -1,40 +1,17 @@
-const express = require("express");
-const router = express.Router();
+const mongoose = require('mongoose');
 
-router.get("/", (req, res) => {
-  res.redirect("/login");
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true }, 
+    password: { type: String, required: true }, 
+    email: { type: String, required: true },
+    isVerified: { type: Boolean, default: false }, 
+    verificationCode: { type: String }, 
+    
+    // --- New fields for Forgot Password ---
+    resetPasswordToken: { type: String }, 
+    resetPasswordExpires: { type: Date },
+
+    createdAt: { type: Date, default: Date.now }
 });
 
-// Render login page
-router.get("/login", (req, res) => {
-  res.render("login");
-});
-
-// Render register page
-router.get("/register", (req, res) => {
-  res.render("register");
-});
-
-// Handle login submission
-router.post("/doLogin", (req, res) => {
-  const { username, password } = req.body;
-  if (username === "admin" && password === "123456") {
-    req.session.user = username;
-    return res.redirect("/list");
-  }
-  res.redirect("/login");
-});
-
-// Handle register submission
-router.post("/doRegister", (req, res) => {
-  res.redirect("/login");
-});
-
-// Logout
-router.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/login");
-  });
-});
-
-module.exports = router;
+module.exports = mongoose.model('User', userSchema);

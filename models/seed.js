@@ -16,9 +16,10 @@ mongoose.connect(process.env.MONGODB_URI).then(async () => {
     await Item.deleteMany({});
 
     console.log("👤 Creating test users...");
-    const seller1 = await User.create({ username: 'zhangsan', password: 'password123', email: 'zhangsan@hkmu.edu.hk' });
-    const seller2 = await User.create({ username: 'lisi', password: 'password123', email: 'lisi@hkmu.edu.hk' });
-    const seller3 = await User.create({ username: 'wangwu', password: 'password123', email: 'wangwu@hkmu.edu.hk' });
+    // 密码用 scrypt 哈希存储（不再明文），并标记邮箱已验证，演示账号可直接登录
+    const seller1 = await User.create({ username: 'zhangsan', password: User.hashPassword('password123'), email: 'zhangsan@hkmu.edu.hk', isVerified: true });
+    const seller2 = await User.create({ username: 'lisi', password: User.hashPassword('password123'), email: 'lisi@hkmu.edu.hk', isVerified: true });
+    const seller3 = await User.create({ username: 'wangwu', password: User.hashPassword('password123'), email: 'wangwu@hkmu.edu.hk', isVerified: true });
 
     console.log("📦 Creating 12 test items...");
     await Item.create([

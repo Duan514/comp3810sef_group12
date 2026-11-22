@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register</title>
+    <title>Register - HKMU Second-hand Trading</title>
 </head>
 <body>
     <h1>Second-hand Trading Platform</h1>
     <h2>Register Page</h2>
+
+    <% if (typeof message !== 'undefined' && message) { %>
+        <p style="color:#dc3545; font-weight:bold;"><%= message %></p>
+    <% } %>
+
     <form action="/doRegister" method="post">
-        Username: <input type="text" name="username"><br>
-        Password: <input type="password" name="password"><br>
+        Username: <input type="text" name="username" required><br>
+        Password: <input type="password" name="password" required minlength="6"><br>
+        Email: <input type="email" name="email" required><br>
         <button type="submit">Register</button>
     </form>
     <a href="/login">Back to Login</a>

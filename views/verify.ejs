@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Email - HKMU Second-hand</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            height: 100vh; margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .box {
+            background: white; padding: 40px; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 420px;
+            border-top: 5px solid #004a99; text-align: center;
+        }
+        h2 { color: #004a99; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        input {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 18px; text-align: center; letter-spacing: 5px; margin-bottom: 15px;
+        }
+        input:focus { border-color: #004a99; outline: none; }
+        button {
+            width: 100%; padding: 12px; background: #004a99; color: white;
+            border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #003366; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .error { color: #dc3545; font-size: 14px; margin-bottom: 15px; }
+        .resend-btn {
+            background: transparent; color: #004a99; border: 1px solid #004a99;
+            margin-top: 15px; font-size: 14px;
+        }
+        .resend-btn:hover { background: #f0f6ff; }
+        .resend-btn:disabled { color: #999; border-color: #ccc; background: transparent; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>📧 验证您的邮箱</h2>
+        <p>我们已向 <strong><%= email %></strong> 发送了 6 位验证码。<br>请检查收件箱或【垃圾邮件】文件夹。</p>
+        
+        <% if (message) { %>
+            <div class="error"><%= message %></div>
+        <% } %>
+
+        <form action="/doVerify" method="POST">
+            <input type="hidden" name="email" value="<%= email %>">
+            <input type="text" name="code" placeholder="请输入6位验证码" maxlength="6" required autocomplete="off">
+            <button type="submit">验证并激活账号</button>
+        </form>
+
+        <!-- 重发按钮 -->
+        <button class="resend-btn" id="resendBtn" onclick="resendCode()">没收到验证码？重新发送</button>
+    </div>
+
+    <script>
+        const email = "<%= email %>";
+        const resendBtn = document.getElementById('resendBtn');
+        let countdown = 0;
+        let timer = null;
+
+        function startCountdown() {
+            countdown = 60;
+            resendBtn.disabled = true;
+            resendBtn.innerText = `重新发送 (${countdown}s)`;
+            
+            timer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    resendBtn.innerText = `重新发送 (${countdown}s)`;
+                } else {
+                    clearInterval(timer);
+                    resendBtn.disabled = false;
+                    resendBtn.innerText = '没收到验证码？重新发送';
+                }
+            }, 1000);
+        }
+
+        async function resendCode() {
+            if (countdown > 0) return; // 倒计时期间禁止点击
+
+            try {
+                // 使用 application/x-www-form-urlencoded 格式发送，兼容性最好
+                const response = await fetch('/resend-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('✅ 验证码已重新发送，请查收邮件！');
+                    startCountdown(); // 成功后开始 60 秒倒计时
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ 网络错误，请稍后再试');
+            }
+        }
+    </script>
+</body>
+</html>
