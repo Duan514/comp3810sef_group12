@@ -18,11 +18,12 @@ Project file intro
 server.js: Main server file and the entry point (npm start). It sets up Express.js and express-session, connects to MongoDB with Mongoose (including the Windows DNS fix), mounts the authentication and web-page routes, and provides the RESTful CRUD services for items: GET /api/items, GET /api/items/:id, POST /api/items, PUT /api/items/:id, DELETE /api/items/:id.
 routes (folder): Express routers.
   auth.js: registration, email verification, resend code, login, forgot / reset password, logout.
-  items.js: web CRUD pages - GET /list (multi-condition search), GET/POST /add, GET /edit, POST /delete-item/:id.
-Legacy files (delete before submission): app.js and routes/user.js are fully replaced by server.js, routes/auth.js and routes/items.js. They are set read-only on this machine, so clear the read-only attribute and delete them manually.
+  items.js: authenticated web CRUD routes for listing and searching items, publishing, editing, changing sale status, and deleting.
+routes/user.js is a legacy router. server.js loads routes/auth.js for authentication.
 package.json: Contains project metadata and dependencies (e.g., express, mongoose, ejs, dotenv).
 .env: Stores sensitive environment variables (e.g., MongoDB URI). Note: Not included in the final submission.
-views (folder): Contains EJS templates for the UI (e.g., login, create item, list items).
+views (folder): Contains the login templates and views/market.ejs, which renders the live marketplace and CRUD forms.
+preview.html: Standalone UI prototype for reference.
 models (folder):
 User.js: Defines the schema for users (username, password, email).
 Item.js: Defines the schema for second-hand items (title, description, price, category, condition, seller, status). Includes a searchItems() static method to handle multi-condition searches.
@@ -31,7 +32,7 @@ seed.js: A script to populate the database with initial test data.
 Operation guides
 4.1 Setup & Installation
 
-1. Install Node.js (v18 or newer). A MongoDB server is also required; this
+1. Install Node.js (v20.19 or newer, v24 recommended). A MongoDB server is also required; this
    project uses a MongoDB Atlas cluster, so no local MongoDB installation is
    needed.
 
@@ -44,6 +45,7 @@ Operation guides
 
 4. (Optional but recommended) Load the sample data - 3 users and 12 items:
    npm run seed
+   Use a separate demo database for this command. The seed script calls deleteMany on both the users and items collections.
 
 5. Start the server:
    npm start
@@ -82,13 +84,23 @@ Forgot password: /forgot-password sends a reset link (valid 1 hour) built from
 
 4.3 Use of CRUD web pages
 
-Create: log in, click "Add Item" in the navbar, fill in title / description / price /
-        category / condition, click "Post Item" -> redirected to /list.
-Read:   /list shows every item as a card. The same query parameters as the API work
-        on the page, e.g. /list?category=Books or /list?minPrice=50&maxPrice=200.
-Update: /edit opens the edit page (placeholder page for now).
-Delete: every item you posted shows a "Delete" button; items posted by other users
-        do not show it, and the server also rejects deleting them.
+Sign in before opening the marketplace. Create a sample listing on a demo database to verify the full workflow.
+
+1. **Create.** Click “发布物品” (Publish), enter the name, description, price in HKD, and category. Condition is optional. Click “发布商品” (Publish listing). The page returns to the marketplace and shows a success message. Invalid fields are highlighted and the form keeps the entered values.
+2. **Read and search.** `/list` shows item cards. Open “查看描述” (View description) to read the description. Combine a partial title match, a category, and a price range, for example `/list?title=textbook&category=Books&minPrice=50&maxPrice=200`.
+3. **Update.** Open “我的发布” (My listings), select “编辑” (Edit), change a field, and click “保存修改” (Save changes). The page returns to My listings. Use “标记售出” (Mark sold) and “重新上架” (Relist) to change the sale status.
+4. **Delete.** In My listings, choose “删除” (Delete) and then “确认删除” (Confirm deletion). The listing disappears from the marketplace and My listings.
+
+| Method | Web route | Purpose |
+|---|---|---|
+| GET | `/list` | Browse and search items |
+| GET | `/list?view=mine` | Browse your own items |
+| GET / POST | `/add` | Open the publish form / create an item |
+| GET / POST | `/edit/:id` | Open the prefilled edit form / save changes |
+| POST | `/items/:id/status` | Set status to `Sold` or `Available` |
+| POST | `/delete-item/:id` | Delete an item |
+
+The web routes use the signed-in session. The server assigns the seller on creation and checks ownership before editing, changing status, or deleting. Successful writes are saved to MongoDB before returning to the listing page. Browser requests to `/list` return HTML. A signed-in client can request JSON with `Accept: application/json`.
 
 4.4 Use of RESTful CRUD services (CURL testing)
 

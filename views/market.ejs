@@ -1,0 +1,529 @@
+<%
+  const { items, username, filters, view, editId, notice } = marketData;
+  const categoryLabels = {
+    Books: '书籍教材',
+    Electronics: '数码配件',
+    'Daily Necessities': '生活用品',
+    Sports: '运动户外',
+    Transportation: '交通出行',
+    Furniture: '家具',
+    Other: '其他好物'
+  };
+  const conditionLabels = {
+    New: '全新',
+    'Like New': '九成新',
+    'Very Good': '八成新',
+    Good: '七成新',
+    Fair: '有使用痕迹'
+  };
+  const notices = {
+    created: '商品已发布。',
+    updated: '商品资料已保存。',
+    deleted: '商品已删除。',
+    sold: '商品已标记为售出。',
+    relisted: '商品已重新上架。'
+  };
+  const showForm = view === 'add' || view === 'edit';
+  const editing = view === 'edit';
+  const mine = view === 'mine';
+  const selectedItem = marketData.editItem || items.find(item => item.id === editId) || {};
+  const formValues = marketData.formValues || selectedItem;
+  const fieldErrors = marketData.fieldErrors || {};
+  const categoryLabel = value => Object.hasOwn(categoryLabels, value) ? categoryLabels[value] : value;
+  const conditionLabel = value => Object.hasOwn(conditionLabels, value) ? conditionLabels[value] : value;
+  const categories = [...new Set([
+    ...Object.keys(categoryLabels),
+    ...items.map(item => item.category),
+    filters.category,
+    formValues.category
+  ].filter(Boolean))];
+  const conditions = [...new Set([...Object.keys(conditionLabels), formValues.condition].filter(Boolean))];
+  const priceFormat = new Intl.NumberFormat('en-HK', {
+    style: 'currency',
+    currency: 'HKD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
+  const filtered = Object.values(filters).some(value => value !== '' && value != null);
+  const latest = view === 'market' && !filtered ? items.filter(item => item.status === 'Available').slice(0, 4) : [];
+  function categoryLink(category) {
+    const parameters = new URLSearchParams();
+    for (const [key, value] of Object.entries({ ...filters, category })) {
+      if (value !== '' && value != null) parameters.set(key, value);
+    }
+    return parameters.size ? '/list?' + parameters.toString() : '/list';
+  }
+%>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title><%= showForm ? (editing ? '编辑商品' : '发布物品') : (mine ? '我的发布' : '校园市集') %> · HKMU Market</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20262d;
+      --muted: #52616b;
+      --blue: #006b9f;
+      --blue-dark: #005880;
+      --light-blue: #eaf4fa;
+      --canvas: #f3f6f8;
+      --line: #dce5ea;
+      --white: #fff;
+      --error: #9c2929;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font: 15px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button, input, select, textarea { font: inherit; }
+    :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 25px; }
+    h2 { font-size: 21px; }
+    h3 { font-size: 16px; overflow-wrap: anywhere; }
+    .wrap { width: min(100% - 40px, 1220px); margin-inline: auto; }
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgb(255 255 255 / 94%);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .header-row, .header-navigation, .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .header-row { justify-content: space-between; min-height: 64px; padding-block: 9px; }
+    .header-navigation, .header-actions { min-width: 0; }
+    .brand { color: var(--blue); font-size: 14px; font-weight: 750; letter-spacing: .025em; }
+    .nav-button { color: var(--ink); padding: 6px 9px; border-radius: 6px; }
+    .nav-button:hover, .nav-button[aria-current="page"] { background: var(--light-blue); color: var(--blue); text-decoration: none; }
+    .signed-in { color: var(--muted); overflow-wrap: anywhere; }
+    main { padding-block: 24px 48px; }
+    .market-layout { display: grid; gap: 18px; }
+    .action-button, .secondary-button {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      border: 1px solid var(--blue);
+      background: var(--blue);
+      color: var(--white);
+      font-weight: 600;
+      line-height: 1.2;
+      padding: 8px 13px;
+      cursor: pointer;
+    }
+    .action-button:hover { color: var(--white); background: var(--blue-dark); text-decoration: none; }
+    .secondary-button { background: var(--white); color: var(--blue); border-color: var(--line); }
+    .secondary-button:hover { color: var(--blue); border-color: var(--blue); text-decoration: none; }
+    .danger { color: var(--error); }
+    .danger:hover { color: var(--error); border-color: var(--error); }
+    button:disabled { opacity: .65; cursor: progress; }
+    .filter-box, .form-panel, .item-card, .showcase-link, .my-listing, .empty-state {
+      background: var(--white);
+      border: 1px solid var(--line);
+    }
+    .filter-box { padding: 15px; border-radius: 14px; }
+    .search-form { display: grid; grid-template-columns: minmax(0, 3fr) repeat(2, minmax(0, 1fr)) auto; align-items: end; gap: 10px; }
+    .field { display: grid; gap: 5px; min-width: 0; }
+    .field label { font-weight: 600; }
+    .field small { color: var(--muted); font-weight: 400; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      min-width: 0;
+      min-height: 39px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: #f9fbfc;
+      padding: 8px 10px;
+    }
+    .field textarea { min-height: 110px; resize: vertical; }
+    .field :is(input, textarea, select):focus { border-color: var(--blue); }
+    .field [aria-invalid="true"] { border-color: var(--error); }
+    .field-error { color: var(--error); font-size: .9em; }
+    .category-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+    .category-chip {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      padding: 5px 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      background: #f0f2f3;
+      overflow-wrap: anywhere;
+    }
+    .category-chip:hover, .category-chip[aria-current="true"] {
+      border-color: #b7d7e8;
+      background: var(--light-blue);
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .section-head, .item-bottom, .heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .section-head { margin-bottom: 10px; }
+    .section-head p, .detail-copy p, .seller, .form-heading p { color: var(--muted); }
+    .showcase-grid, .items { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .showcase-link { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); border-radius: 10px; overflow: hidden; color: var(--ink); }
+    .showcase-link:hover { border-color: #9eb8c7; text-decoration: none; }
+    .showcase-info { display: flex; min-height: 98px; flex-direction: column; justify-content: center; gap: 6px; padding: 10px 13px; }
+    .item-card { overflow: hidden; min-width: 0; border-radius: 16px; box-shadow: 0 3px 12px rgb(24 43 54 / 4%); scroll-margin-top: 90px; }
+    .item-cover { min-height: 110px; }
+    .item-cover, .showcase-cover, .my-listing-cover {
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #f5f8fa, #e8eef2);
+      color: #728692;
+    }
+    .placeholder-icon { font-size: 29px; line-height: 1; }
+    .item-content { display: grid; gap: 9px; min-width: 0; padding: 12px 15px 13px; }
+    .item-category, .listing-status, .condition-label {
+      width: fit-content;
+      max-width: 100%;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--light-blue);
+      color: var(--blue);
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+    .listing-status.sold, .condition-label { background: #eff2f4; color: var(--muted); }
+    .price { font-size: 19px; font-weight: 700; }
+    .detail-copy { border-top: 1px solid var(--line); padding-top: 7px; }
+    .detail-copy summary { color: var(--blue); cursor: pointer; }
+    .detail-copy p { margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .seller { overflow-wrap: anywhere; }
+    .empty-state { padding: 26px 16px; border-style: dashed; border-radius: 12px; text-align: center; color: var(--muted); }
+    .form-panel { width: min(100%, 720px); margin-inline: auto; border-radius: 14px; padding: 24px; }
+    .form-heading { display: grid; gap: 5px; margin-bottom: 18px; }
+    .publish-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .field-wide, .form-actions, .form-error { grid-column: 1 / -1; }
+    .form-actions, .listing-actions, .delete-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .form-actions { justify-content: flex-end; }
+    .notice, .form-error { padding: 10px 13px; border-radius: 7px; overflow-wrap: anywhere; }
+    .notice { border: 1px solid #afd1e4; background: var(--light-blue); color: #154466; margin-bottom: 16px; }
+    #listing-error { margin-bottom: 16px; }
+    .form-error { border: 1px solid #e9b9b9; background: #fff3f3; color: var(--error); }
+    .my-listings-list { display: grid; gap: 10px; margin-top: 14px; }
+    .my-listing {
+      display: grid;
+      grid-template-columns: 62px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      border-radius: 12px;
+      padding: 11px;
+    }
+    .my-listing-cover { min-height: 60px; border-radius: 7px; }
+    .my-listing h2 { font-size: 16px; overflow-wrap: anywhere; }
+    .my-listing-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+    .my-listing-meta .price { font-size: 16px; }
+    .delete-confirm { display: inline-flex; position: relative; }
+    .delete-confirm > summary { list-style: none; }
+    .delete-confirm > summary::-webkit-details-marker { display: none; }
+    .delete-panel {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      z-index: 1;
+      width: min(245px, 75vw);
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgb(24 43 54 / 12%);
+    }
+    .delete-panel form { margin-top: 8px; }
+    .card-edit { justify-self: start; }
+
+    @media (max-width: 930px) {
+      .showcase-grid, .items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .wrap { width: calc(100% - 24px); }
+      .site-header { position: static; }
+      .header-row, .header-navigation, .header-actions { gap: 5px; }
+      .header-row { align-items: start; }
+      main { padding-block: 18px 36px; }
+      .search-form { grid-template-columns: 1fr 1fr; }
+      .search-form > .search-field, .search-form > button { grid-column: 1 / -1; }
+      .my-listing { grid-template-columns: 46px minmax(0, 1fr); }
+      .my-listing .listing-actions { grid-column: 2; }
+      .my-listing-cover { min-height: 49px; }
+      .form-panel { padding: 16px; }
+    }
+    @media (max-width: 390px) {
+      .showcase-grid, .items, .publish-form { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <nav class="header-navigation" aria-label="主导航">
+        <a class="brand" href="/list">HKMU MARKET</a>
+        <a class="nav-button" href="/list"<% if (view === 'market') { %> aria-current="page"<% } %>>首页</a>
+        <a class="nav-button" href="/list?view=mine"<% if (mine) { %> aria-current="page"<% } %>>我的发布</a>
+      </nav>
+      <div class="header-actions">
+        <span class="signed-in"><%= username %></span>
+        <a class="nav-button" href="/logout">登出</a>
+        <a class="action-button" href="/add">＋ 发布物品</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <% if (Object.hasOwn(notices, notice)) { %><p class="notice" role="status"><%= notices[notice] %></p><% } %>
+    <% if (!showForm) { %>
+      <p class="form-error" id="listing-error" role="alert"<% if (!marketData.error) { %> hidden<% } %>><%= marketData.error || '' %></p>
+    <% } %>
+    <% if (showForm) { %>
+      <section class="form-panel" aria-labelledby="form-title">
+        <div class="form-heading">
+          <a href="<%= editing ? '/list?view=mine' : '/list' %>">← <%= editing ? '返回我的发布' : '返回市集' %></a>
+          <h1 id="form-title"><%= editing ? '编辑商品' : '发布物品' %></h1>
+        </div>
+        <form class="publish-form" id="publish-form" method="post" action="<%= editing ? '/edit/' + encodeURIComponent(editId) : '/add' %>" data-mutation>
+          <div class="field field-wide">
+            <label for="title">名称</label>
+            <input id="title" name="title" type="text" value="<%= formValues.title ?? '' %>" maxlength="<%= Math.max(60, selectedItem.title?.length || 0) %>" required aria-describedby="title-error"<% if (fieldErrors.title) { %> aria-invalid="true"<% } %>>
+            <p class="field-error" id="title-error"<% if (!fieldErrors.title) { %> hidden<% } %>><%= fieldErrors.title || '' %></p>
+          </div>
+          <div class="field field-wide">
+            <label for="description">描述</label>
+            <textarea id="description" name="description" maxlength="<%= Math.max(300, selectedItem.description?.length || 0) %>" required aria-describedby="description-error"<% if (fieldErrors.description) { %> aria-invalid="true"<% } %>><%= formValues.description ?? '' %></textarea>
+            <p class="field-error" id="description-error"<% if (!fieldErrors.description) { %> hidden<% } %>><%= fieldErrors.description || '' %></p>
+          </div>
+          <div class="field">
+            <label for="price">价格（HKD）</label>
+            <input id="price" name="price" type="number" value="<%= formValues.price ?? '' %>" min="0" step="any" required aria-describedby="price-error"<% if (fieldErrors.price) { %> aria-invalid="true"<% } %>>
+            <p class="field-error" id="price-error"<% if (!fieldErrors.price) { %> hidden<% } %>><%= fieldErrors.price || '' %></p>
+          </div>
+          <div class="field">
+            <label for="category">分类</label>
+            <select id="category" name="category" required aria-describedby="category-error"<% if (fieldErrors.category) { %> aria-invalid="true"<% } %>>
+              <option value=""<% if (!formValues.category) { %> selected<% } %> disabled>请选择分类</option>
+              <% for (const category of categories) { %>
+                <option value="<%= category %>"<% if (formValues.category === category) { %> selected<% } %>><%= categoryLabel(category) %></option>
+              <% } %>
+            </select>
+            <p class="field-error" id="category-error"<% if (!fieldErrors.category) { %> hidden<% } %>><%= fieldErrors.category || '' %></p>
+          </div>
+          <div class="field">
+            <label for="condition">成色 <small>选填</small></label>
+            <select id="condition" name="condition" aria-describedby="condition-error"<% if (fieldErrors.condition) { %> aria-invalid="true"<% } %>>
+              <option value="">请选择成色</option>
+              <% for (const condition of conditions) { %>
+                <option value="<%= condition %>"<% if (formValues.condition === condition) { %> selected<% } %>><%= conditionLabel(condition) %></option>
+              <% } %>
+            </select>
+            <p class="field-error" id="condition-error"<% if (!fieldErrors.condition) { %> hidden<% } %>><%= fieldErrors.condition || '' %></p>
+          </div>
+          <p class="form-error" id="publish-error" role="alert"<% if (!marketData.error) { %> hidden<% } %>><%= marketData.error || '' %></p>
+          <div class="form-actions">
+            <a class="secondary-button" href="<%= editing ? '/list?view=mine' : '/list' %>">取消</a>
+            <button class="action-button" type="submit"><%= editing ? '保存修改' : '发布商品' %></button>
+          </div>
+        </form>
+      </section>
+    <% } else if (mine) { %>
+      <section id="my-listings-view" aria-labelledby="my-listings-heading">
+        <div class="heading-row">
+          <h1 id="my-listings-heading">我的发布</h1>
+          <a href="/list">← 返回市集</a>
+        </div>
+        <div class="my-listings-list">
+          <% for (const item of items.filter(item => item.isOwner)) { %>
+            <% const sold = item.status === 'Sold'; const id = encodeURIComponent(item.id); %>
+            <article class="my-listing">
+              <div class="my-listing-cover" aria-hidden="true"><span class="placeholder-icon">▧</span></div>
+              <div>
+                <h2><%= item.title %></h2>
+                <div class="my-listing-meta">
+                  <span class="price"><%= priceFormat.format(item.price) %></span>
+                  <span class="listing-status<%= sold ? ' sold' : '' %>"><%= sold ? '已售出' : '在售' %></span>
+                  <span class="item-category"><%= categoryLabel(item.category) %></span>
+                </div>
+              </div>
+              <div class="listing-actions">
+                <a class="secondary-button" href="/edit/<%= id %>">编辑</a>
+                <form action="/items/<%= id %>/status" method="post" data-mutation>
+                  <input type="hidden" name="status" value="<%= sold ? 'Available' : 'Sold' %>">
+                  <button class="secondary-button" type="submit"><%= sold ? '重新上架' : '标记售出' %></button>
+                </form>
+                <details class="delete-confirm">
+                  <summary class="secondary-button danger">删除</summary>
+                  <div class="delete-panel">
+                    <p>确定删除这件商品？</p>
+                    <form action="/delete-item/<%= id %>" method="post" data-mutation>
+                      <button class="secondary-button danger" type="submit">确认删除</button>
+                    </form>
+                  </div>
+                </details>
+              </div>
+            </article>
+          <% } %>
+          <% if (!items.some(item => item.isOwner)) { %><p class="empty-state">你还没有发布商品。</p><% } %>
+        </div>
+      </section>
+    <% } else { %>
+      <section class="market-layout" id="market-view" aria-labelledby="market-title">
+        <h1 id="market-title">校园市集</h1>
+        <div class="filter-box">
+          <form class="search-form" id="search-form" method="get" action="/list" aria-label="搜索商品">
+            <% if (filters.category) { %><input type="hidden" name="category" value="<%= filters.category %>"><% } %>
+            <div class="field search-field">
+              <label for="search">商品名称</label>
+              <input id="search" name="title" type="search" maxlength="60" value="<%= filters.title ?? '' %>" placeholder="例如：教科书">
+            </div>
+            <div class="field">
+              <label for="min-price">最低价（HKD）</label>
+              <input id="min-price" name="minPrice" type="number" min="0" step="any" value="<%= filters.minPrice ?? '' %>">
+            </div>
+            <div class="field">
+              <label for="max-price">最高价（HKD）</label>
+              <input id="max-price" name="maxPrice" type="number" min="0" step="any" value="<%= filters.maxPrice ?? '' %>">
+            </div>
+            <button class="action-button" type="submit">搜索</button>
+          </form>
+        </div>
+        <% if (latest.length) { %>
+          <section aria-labelledby="showcase-title">
+            <div class="section-head"><h2 id="showcase-title">最新发布</h2></div>
+            <div class="showcase-grid">
+              <% for (const item of latest) { %>
+                <a class="showcase-link" href="#item-<%= encodeURIComponent(item.id) %>">
+                  <div class="showcase-info"><h3><%= item.title %></h3><span class="price"><%= priceFormat.format(item.price) %></span></div>
+                  <div class="showcase-cover" aria-hidden="true"><span class="placeholder-icon">▧</span></div>
+                </a>
+              <% } %>
+            </div>
+          </section>
+        <% } %>
+        <nav class="category-filters" aria-label="商品分类">
+          <a class="category-chip" href="<%= categoryLink('') %>"<% if (!filters.category) { %> aria-current="true"<% } %>>全部分类</a>
+          <% for (const category of categories) { %>
+            <a class="category-chip" href="<%= categoryLink(category) %>"<% if (filters.category === category) { %> aria-current="true"<% } %>><%= categoryLabel(category) %></a>
+          <% } %>
+        </nav>
+        <section aria-labelledby="list-title">
+          <div class="section-head">
+            <h2 id="list-title"><%= filtered ? '搜索结果' : '全部商品' %></h2>
+            <p id="result-count"><%= items.length %> 件商品 <% if (filtered) { %>· <a href="/list">清除筛选</a><% } %></p>
+          </div>
+          <% if (items.length) { %>
+            <div class="items" id="items">
+              <% for (const item of items) { %>
+                <% const sold = item.status === 'Sold'; const id = encodeURIComponent(item.id); %>
+                <article class="item-card" id="item-<%= id %>">
+                  <div class="item-cover" aria-hidden="true"><span class="placeholder-icon">▧</span></div>
+                  <div class="item-content">
+                    <div class="item-bottom">
+                      <span class="item-category"><%= categoryLabel(item.category) %></span>
+                      <span class="listing-status<%= sold ? ' sold' : '' %>"><%= sold ? '已售出' : '在售' %></span>
+                    </div>
+                    <h3><%= item.title %></h3>
+                    <div class="item-bottom">
+                      <span class="price"><%= priceFormat.format(item.price) %></span>
+                      <% if (item.condition) { %><span class="condition-label"><%= conditionLabel(item.condition) %></span><% } %>
+                    </div>
+                    <% if (item.sellerName) { %><p class="seller">卖家 <%= item.sellerName %></p><% } %>
+                    <details class="detail-copy">
+                      <summary>查看描述</summary>
+                      <p><%= item.description %></p>
+                    </details>
+                    <% if (item.isOwner) { %><a class="card-edit" href="/edit/<%= id %>">编辑商品</a><% } %>
+                  </div>
+                </article>
+              <% } %>
+            </div>
+          <% } else { %>
+            <p class="empty-state" id="empty-state" role="status"><%= filtered ? '没有符合筛选条件的商品。' : '市集目前没有商品。' %></p>
+          <% } %>
+        </section>
+      </section>
+    <% } %>
+  </main>
+
+  <script>
+    for (const form of document.querySelectorAll('form[data-mutation]')) {
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const submit = event.submitter || form.querySelector('button[type="submit"]');
+        if (submit.disabled) return;
+
+        const alert = document.getElementById(form.id === 'publish-form' ? 'publish-error' : 'listing-error');
+        alert.hidden = true;
+        for (const control of form.querySelectorAll('[aria-invalid]')) {
+          control.removeAttribute('aria-invalid');
+          document.getElementById(control.id + '-error').hidden = true;
+        }
+
+        submit.disabled = true;
+        let navigating = false;
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: new URLSearchParams(new FormData(form))
+          });
+          if (response.status === 401) {
+            navigating = true;
+            location.assign('/login');
+            return;
+          }
+
+          const result = await response.json();
+          if (response.ok && result.redirect) {
+            navigating = true;
+            location.assign(result.redirect);
+            return;
+          }
+          alert.textContent = result.error || '操作未能完成。';
+          alert.hidden = false;
+          let firstInvalid;
+          for (const [field, message] of Object.entries(result.fields || {})) {
+            const control = form.elements.namedItem(field);
+            const fieldError = document.getElementById(field + '-error');
+            if (!control || !fieldError) continue;
+            control.setAttribute('aria-invalid', 'true');
+            fieldError.textContent = message;
+            fieldError.hidden = false;
+            firstInvalid ||= control;
+          }
+          if (firstInvalid) firstInvalid.focus();
+          else alert.scrollIntoView({ block: 'nearest' });
+        } catch {
+          alert.textContent = '未能读取服务器回应。请刷新页面查看最新状态。';
+          alert.hidden = false;
+          alert.scrollIntoView({ block: 'nearest' });
+        } finally {
+          if (!navigating) submit.disabled = false;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
