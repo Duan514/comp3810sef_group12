@@ -4,10 +4,26 @@
 // 技术栈: Express (L6) + Mongoose (L5/L6) + EJS (L7) + session (L7) + REST (L8)
 // ============================================================================
 
+// ===================== Demo SMTP & MongoDB Config =====================
+// For local demo only. Comment this block before submission.
+
+process.env.SMTP_HOST = "smtp.qq.com";
+process.env.SMTP_PORT = 465;
+process.env.SMTP_SECURE = true;
+process.env.SMTP_USER = "1056833469@qq.com";
+process.env.SMTP_PASS = "brngatokulrlbfig";
+process.env.MAIL_FROM = "1056833469@qq.com";
+
+if (!process.env.MONGODB_URI) {
+  process.env.MONGODB_URI = "mongodb+srv://Cdg111:Chendegao123@cluster0.vxksxkp.mongodb.net/?retryWrites=true&w=majority";
+}
+
+
+
 // Windows 修复: 让 Node 用公共 DNS 解析 "mongodb+srv" 的 SRV 记录，否则在
 // Windows 上会报 ECONNREFUSED / ETIMEOUT。必须放在加载 mongoose 之前。
-const dns = require('dns');
-dns.setServers(['8.8.8.8']);
+//const dns = require('dns');
+//dns.setServers(['8.8.8.8']);
 
 // 读取 .env 里的 MONGODB_URI（环境变量）
 require('dotenv').config();
@@ -148,17 +164,18 @@ app.use((err, req, res, next) => {
 // L5: 连接 MongoDB（先连库、再监听，失败时给出清晰报错）
 // ---------------------------------------------------------------------------
 async function start() {
-  if (!process.env.MONGODB_URI) {
-    console.error('MONGODB_URI is missing in .env');
+  const uri = typeof MONGODB_URI !== 'undefined' ? MONGODB_URI : process.env.MONGODB_URI;
+  if (!uri) {
+    console.error('MONGODB_URI is missing');
     process.exit(1);
   }
-  await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 }); // L5
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 }); // L5
   console.log('MongoDB connected:', mongoose.connection.name);
   app.listen(PORT, () => console.log('Server: http://localhost:' + PORT)); // L5: app.listen()
 }
 
 start().catch((err) => {
   console.error('MongoDB connection failed:', err.message);
-  console.error('Check .env / Atlas IP whitelist. If 8.8.8.8 is blocked, comment out dns.setServers.');
+  console.error('Check your MongoDB URI / Atlas IP whitelist. If 8.8.8.8 is blocked, comment out dns.setServers.');
   process.exit(1);
 });

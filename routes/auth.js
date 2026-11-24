@@ -14,12 +14,20 @@ try {
     nodemailer = null;
 }
 
-const transporter = (nodemailer && process.env.SMTP_HOST)
+// 优先读取全局常量（server.js里定义的），没有则读取环境变量
+const smtpHost = typeof SMTP_HOST !== 'undefined' ? SMTP_HOST : process.env.SMTP_HOST;
+const smtpPort = typeof SMTP_PORT !== 'undefined' ? SMTP_PORT : process.env.SMTP_PORT;
+const smtpSecure = typeof SMTP_SECURE !== 'undefined' ? SMTP_SECURE : process.env.SMTP_SECURE;
+const smtpUser = typeof SMTP_USER !== 'undefined' ? SMTP_USER : process.env.SMTP_USER;
+const smtpPass = typeof SMTP_PASS !== 'undefined' ? SMTP_PASS : process.env.SMTP_PASS;
+const mailFrom = typeof MAIL_FROM !== 'undefined' ? MAIL_FROM : process.env.MAIL_FROM;
+
+const transporter = (nodemailer && smtpHost)
     ? nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 465),
-        secure: String(process.env.SMTP_SECURE || 'true') === 'true',
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+        host: smtpHost,
+        port: Number(smtpPort || 465),
+        secure: String(smtpSecure || 'true') === 'true',
+        auth: { user: smtpUser, pass: smtpPass }
     })
     : null;
 
@@ -33,7 +41,7 @@ async function sendMail(to, subject, html) {
     }
     try {
         await transporter.sendMail({
-            from: process.env.MAIL_FROM || process.env.SMTP_USER,
+            from: mailFrom || smtpUser,
             to: to,
             subject: subject,
             html: html
