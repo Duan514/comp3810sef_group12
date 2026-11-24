@@ -2460,7 +2460,7 @@
 
     const supportedLanguages = Object.keys(translations);
     const storedLanguage = localStorage.getItem("campus-market-language");
-    let currentLanguage = supportedLanguages.includes(storedLanguage) ? storedLanguage : "zh-CN";
+    let currentLanguage = supportedLanguages.includes(storedLanguage) ? storedLanguage : "en";
     languageSelect.value = currentLanguage;
 
     function translate(key, values = {}) {
@@ -2593,76 +2593,7 @@
       if (persist) localStorage.setItem("campus-market-language", language);
     }
 
-    const products = [
-      {
-        id: "math-book",
-        createdAt: Date.now() - 86400000,
-        title: "同济版高等数学",
-        description: "第七版上下册，笔记清晰，适合期末复习。",
-        localized: {
-          "zh-CN": {
-            title: "同济版高等数学",
-            description: "第七版上下册，笔记清晰，适合期末复习。",
-            flaws: "封面边角有轻微折痕。",
-            location: "东区宿舍"
-          },
-          "zh-TW": {
-            title: "同濟版高等數學",
-            description: "第七版上下冊，筆記清晰，適合期末複習。",
-            flaws: "封面邊角有輕微摺痕。",
-            location: "東區宿舍"
-          },
-          en: {
-            title: "Tongji Advanced Mathematics",
-            description: "Seventh edition, both volumes, with clear notes—ideal for exam revision.",
-            flaws: "Slight creasing on the cover corners.",
-            location: "East Campus Dorms"
-          }
-        },
-        price: "18",
-        category: "书籍教材",
-        condition: "七成新",
-        status: "active",
-        location: "东区宿舍",
-        seller: "小林同学",
-        flaws: "封面边角有轻微折痕。",
-        images: []
-      },
-      {
-        id: "wireless-earphones",
-        createdAt: Date.now() - 3600000,
-        title: "无线蓝牙耳机",
-        description: "使用半年，连接稳定，附充电盒和收纳袋。",
-        localized: {
-          "zh-CN": {
-            title: "无线蓝牙耳机",
-            description: "使用半年，连接稳定，附充电盒和收纳袋。",
-            flaws: "充电盒外侧有轻微划痕。",
-            location: "图书馆门口"
-          },
-          "zh-TW": {
-            title: "無線藍牙耳機",
-            description: "使用半年，連線穩定，附充電盒和收納袋。",
-            flaws: "充電盒外側有輕微刮痕。",
-            location: "圖書館門口"
-          },
-          en: {
-            title: "Wireless Bluetooth Headphones",
-            description: "Used for six months with a stable connection; includes a charging case and pouch.",
-            flaws: "A slight scratch on the outside of the charging case.",
-            location: "Library entrance"
-          }
-        },
-        price: "65",
-        category: "数码配件",
-        condition: "成色很新",
-        status: "active",
-        location: "图书馆门口",
-        seller: "阿哲同学",
-        flaws: "充电盒外侧有轻微划痕。",
-        images: []
-      }
-    ];
+    let products = [];
 
     const likedProductStorageKey = "campus-market-liked-products";
     const likedProductIds = new Set(
@@ -3364,7 +3295,7 @@
 
     function renderMyListings() {
       myListingsList.replaceChildren();
-      const ownListings = products.filter((product) => product.ownerId === demoAccountId);
+         const ownListings = products.filter((product) => product.seller === "test user" || product.seller === "zhangsan" || product.seller === "lisi" || product.seller === "wangwu");
       if (!ownListings.length) {
         const empty = document.createElement("div");
         empty.className = "empty-listings";
@@ -3468,26 +3399,25 @@
       };
     }
 
-    function removeListing(productId) {
-      const index = products.findIndex((product) => product.id === productId);
-      if (index < 0) return;
-      const selectedConversation = getSelectedConversation();
-      const removingSelectedConversation = selectedConversation && selectedConversation.productId === productId;
-      products.splice(index, 1);
-      if (likedProductIds.delete(productId)) {
-        localStorage.setItem(likedProductStorageKey, [...likedProductIds].join(","));
+    async function removeListing(productId) {
+      try {
+        const response = await fetch(`/api/items/${productId}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          alert("刪除成功！");
+          // refresh the product list and my listings after deletion
+          await loadBackendData();
+          pendingDeleteId = null;
+          renderMyListings();
+          showMarket(); // back to market view after deletion
+        } else {
+          alert("刪除失敗。");
+        }
+      } catch (error) {
+        console.error("刪除失敗:", error);
       }
-      const conversationIndex = conversations.findIndex((conversation) => conversation.productId === productId);
-      if (conversationIndex >= 0) conversations.splice(conversationIndex, 1);
-      if (removingSelectedConversation) {
-        selectedConversationId = null;
-        selectedProduct = null;
-      }
-      pendingDeleteId = null;
-      renderProducts();
-      updateUnreadIndicators();
-      renderMyListings();
-      if (currentView === "messages") renderThread();
     }
 
     searchInput.addEventListener("input", updateResults);
@@ -3635,77 +3565,91 @@
     publishForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!validateListing()) return;
-      const wasEditing = Boolean(editingProductId);
+      
       formError.hidden = true;
       const title = document.querySelector("#title").value.trim();
       const description = document.querySelector("#description").value.trim();
       const price = String(document.querySelector("#price").value);
       const category = document.querySelector("#category").value;
       const condition = document.querySelector("#condition").value;
-      let images = [];
+
+      // change the data structure to match the backend API requirements
+      const newItemData = {
+        title: title,
+        description: description,
+        price: Number(price),
+        category: category,
+        condition: condition,
+        seller: "test user" // backend will handle the actual user authentication and association
+      };
+
       try {
-        if (selectedFiles.length) images = await Promise.all(selectedFiles.map(readImage));
-      } catch {
-        setFieldError("photos", "form.errorPhotos");
-        return;
-      }
+        // send the new item data to the backend API
+        const response = await fetch('/api/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newItemData)
+        });
 
-      if (editingProductId) {
-        const product = products.find((entry) => entry.id === editingProductId);
-        if (!product) {
-          formError.textContent = translate("result.error");
-          formError.hidden = false;
-          return;
+        if (response.ok) {
+          alert("Published successfully! Saved to the database!");
+          
+          // refresh the product list and my listings after publishing
+          await loadBackendData();
+          
+          // clear the form and reset the view to market after successful publishing
+          publishForm.reset();
+          clearFieldErrors();
+          searchInput.value = "";
+          activeCategory = "";
+          categoryFilters.querySelectorAll(".category-chip").forEach((button, index) => {
+            button.setAttribute("aria-pressed", String(index === 0));
+          });
+          showMarket();
+        } else {
+          alert("Failed to publish, please check the fields.");
         }
-        product.title = title;
-        product.description = description;
-        product.price = price;
-        product.category = category;
-        product.condition = condition;
-        product.localized = localizedUserFields(title, description);
-        if (selectedFiles.length) product.images = images;
-      } else {
-        products.unshift({
-          id: `item-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          createdAt: Date.now(),
-          ownerId: demoAccountId,
-          title,
-          description,
-          localized: localizedUserFields(title, description),
-          price,
-          category,
-          condition,
-          status: "active",
-          location: "校内约地点",
-          seller: "校园集同学",
-          flaws: "",
-          images
-        });
+      } catch (error) {
+        console.error("Failed to publish:", error);
+        alert("System error, unable to connect to server.");
       }
-
-      editingProductId = null;
-      selectedFiles = [];
-      clearPhotoPreview();
-      publishForm.reset();
-      clearFieldErrors();
-      if (!wasEditing) {
-        searchInput.value = "";
-        activeCategory = "";
-        categoryFilters.querySelectorAll(".category-chip").forEach((button, index) => {
-          button.setAttribute("aria-pressed", String(index === 0));
-        });
-      }
-      renderProducts();
-      renderMyListings();
-      updateUnreadIndicators();
-      if (wasEditing) showMyListings();
-      else showMarket();
     });
 
-    document.body.classList.add("home-page");
-    renderProducts();
-    updateUnreadIndicators();
-    applyLanguage(currentLanguage, false);
+    // retrieve data from backend API and transform it to frontend format
+      async function loadBackendData() {
+        try {
+          const response = await fetch('/api/items');
+          const data = await response.json();
+
+          // transform backend data to frontend format
+          products = data.map(item => ({
+            id: item._id,
+            createdAt: new Date(item.createdAt).getTime() || Date.now(),
+            title: item.title,
+            description: item.description,
+            price: String(item.price),
+            category: item.category,
+            condition: item.condition || "unknown",
+            status: item.status === 'Available' ? 'active' : 'sold',
+            location: "school campus",
+            seller: item.seller ? item.seller.username : "unknown",
+            flaws: "",
+            images: []
+          }));
+
+          document.body.classList.add("home-page");
+          renderProducts();
+          updateUnreadIndicators();
+          applyLanguage(currentLanguage, false);
+
+        } catch (error) {
+          console.error("Failed to load products:", error);
+          alert("System error, unable to connect to server.");
+        }
+      }
+
+    // initial load of backend data
+    loadBackendData();
   </script>
 </body>
 </html>

@@ -35,6 +35,7 @@ const PORT = process.env.PORT || 3000;
 app.set('view engine', 'ejs');                 // L7: 用 EJS 作为模板引擎
 app.use(express.json());                       // L7: 解析 JSON 请求体（REST API 用）
 app.use(express.urlencoded({ extended: true })); // L7: 解析 HTML 表单
+app.use(express.static('public'));
 app.use(session({                              // L7: 会话中间件
   secret: 'my-secret-key',
   resave: false,
@@ -62,16 +63,20 @@ app.get('/api/items/:id', async (req, res) => {
   res.json(item);
 });
 
-// POST /api/items —— 新建商品（title/description/price/category 由 Schema 强制必填）
+// POST /api/items —— create（白名单字段，防止客户端改 _id / createdAt）
 app.post('/api/items', async (req, res) => {
   const body = req.body || {};
-  const item = await Item.create({   // L6: Model.create()
+  
+  // check if seller is a valid ObjectId
+  const validSeller = mongoose.Types.ObjectId.isValid(body.seller) ? body.seller : undefined;
+
+  const item = await Item.create({
     title: body.title,
     description: body.description,
     price: body.price,
     category: body.category,
     condition: body.condition,
-    seller: body.seller,
+    seller: validSeller, 
     status: body.status
   });
   res.status(201).location('/api/items/' + item._id).json(item);

@@ -165,7 +165,7 @@ router.post('/doLogin', async (req, res) => {
 
     req.session.user = user.username;
     req.session.userId = user._id.toString();
-    res.redirect('/list');
+    res.redirect('/preview.html');
 });
 
 // ---------- 忘记密码 ----------
