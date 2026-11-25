@@ -27,6 +27,8 @@ router.get('/list', async (req, res) => {
   }
 
   const view = req.query.view === 'mine' ? 'mine' : 'market';
+  const lang = req.query.lang === 'en' ? 'en' : 'zh'; // Read language parameter
+  
   const filters = {
     title: textValue(req.query.title),
     category: textValue(req.query.category),
@@ -43,7 +45,8 @@ router.get('/list', async (req, res) => {
       filters,
       view,
       items: [],
-      error: 'Enter a valid price range.'
+      lang, // Pass lang
+      error: lang === 'zh' ? '请输入有效的价格范围。' : 'Enter a valid price range.'
     });
   }
 
@@ -66,6 +69,7 @@ router.get('/list', async (req, res) => {
     filters,
     view,
     items,
+    lang, // Pass lang
     isAdmin: currentUser.role === 'admin'
   });
 });
@@ -74,11 +78,13 @@ router.get('/list', async (req, res) => {
 router.get('/add', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
+  const lang = req.query.lang === 'en' ? 'en' : 'zh';
   renderMarket(req, res, {
     username: currentUser.username,
     view: 'add',
     filters: {},
-    items: []
+    items: [],
+    lang
   });
 });
 
@@ -86,13 +92,21 @@ router.get('/add', async (req, res) => {
 router.post('/add', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
+  const lang = req.query.lang === 'en' ? 'en' : 'zh';
   const { title, description, price, category, condition } = req.body;
   const fieldErrors = {};
-  if (!title || title.length > 60) fieldErrors.title = 'Title is required and max 60 chars';
-  if (!description || description.length > 300) fieldErrors.description = 'Description is required and max 300 chars';
+  
+  const errorMessages = {
+    zh: { title: '名称必填且不超过60字', description: '描述必填且不超过300字', price: '价格必须大于等于0', category: '请选择分类' },
+    en: { title: 'Title is required and max 60 chars', description: 'Description is required and max 300 chars', price: 'Price must be >=0', category: 'Category is required' }
+  };
+  const errs = errorMessages[lang];
+
+  if (!title || title.length > 60) fieldErrors.title = errs.title;
+  if (!description || description.length > 300) fieldErrors.description = errs.description;
   const p = Number(price);
-  if (!validPrice(p)) fieldErrors.price = 'Price must be >=0';
-  if (!category) fieldErrors.category = 'Category is required';
+  if (!validPrice(p)) fieldErrors.price = errs.price;
+  if (!category) fieldErrors.category = errs.category;
 
   if (Object.keys(fieldErrors).length > 0) {
     return renderMarket(req, res, {
@@ -101,7 +115,8 @@ router.post('/add', async (req, res) => {
       filters: {},
       items: [],
       formValues: req.body,
-      fieldErrors
+      fieldErrors,
+      lang
     });
   }
 
@@ -115,13 +130,15 @@ router.post('/add', async (req, res) => {
     status: 'Available'
   });
   await newItem.save();
-  return res.redirect('/list?view=mine&notice=created');
+  return res.redirect(`/list?view=mine&notice=created&lang=${lang}`);
 });
 
 // GET /edit/:id
 router.get('/edit/:id', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
+  const lang = req.query.lang === 'en' ? 'en' : 'zh';
+  
   const item = await Item.findById(req.params.id).populate('seller');
   if (!item) return res.status(404).send('Item not found');
   if (item.seller._id.toString() !== currentUser._id.toString() && currentUser.role !== 'admin') {
@@ -133,7 +150,8 @@ router.get('/edit/:id', async (req, res) => {
     editId: req.params.id,
     editItem: item.toObject(),
     filters: {},
-    items: []
+    items: [],
+    lang
   });
 });
 
@@ -141,13 +159,21 @@ router.get('/edit/:id', async (req, res) => {
 router.post('/edit/:id', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
+  const lang = req.query.lang === 'en' ? 'en' : 'zh';
   const { title, description, price, category, condition } = req.body;
   const fieldErrors = {};
-  if (!title || title.length > 60) fieldErrors.title = 'Title is required and max 60 chars';
-  if (!description || description.length > 300) fieldErrors.description = 'Description is required and max 300 chars';
+  
+  const errorMessages = {
+    zh: { title: '名称必填且不超过60字', description: '描述必填且不超过300字', price: '价格必须大于等于0', category: '请选择分类' },
+    en: { title: 'Title is required and max 60 chars', description: 'Description is required and max 300 chars', price: 'Price must be >=0', category: 'Category is required' }
+  };
+  const errs = errorMessages[lang];
+
+  if (!title || title.length > 60) fieldErrors.title = errs.title;
+  if (!description || description.length > 300) fieldErrors.description = errs.description;
   const p = Number(price);
-  if (!validPrice(p)) fieldErrors.price = 'Price must be >=0';
-  if (!category) fieldErrors.category = 'Category is required';
+  if (!validPrice(p)) fieldErrors.price = errs.price;
+  if (!category) fieldErrors.category = errs.category;
 
   const item = await Item.findById(req.params.id);
   if (!item) return res.status(404).send('Item not found');
@@ -164,7 +190,8 @@ router.post('/edit/:id', async (req, res) => {
       filters: {},
       items: [],
       formValues: req.body,
-      fieldErrors
+      fieldErrors,
+      lang
     });
   }
 
@@ -174,13 +201,14 @@ router.post('/edit/:id', async (req, res) => {
   item.category = category;
   item.condition = condition;
   await item.save();
-  return res.redirect('/list?view=mine&notice=updated');
+  return res.redirect(`/list?view=mine&notice=updated&lang=${lang}`);
 });
 
 // POST /items/:id/status
 router.post('/items/:id/status', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
+  const lang = req.query.lang === 'en' ? 'en' : 'zh';
   const { status } = req.body;
   if (!['Available','Sold'].includes(status)) return res.status(400).send('Invalid status');
   const item = await Item.findById(req.params.id);
@@ -191,7 +219,7 @@ router.post('/items/:id/status', async (req, res) => {
   item.status = status;
   await item.save();
   const notice = status === 'Sold' ? 'sold' : 'relisted';
-  return res.redirect('/list?view=mine&notice=' + notice);
+  return res.redirect(`/list?view=mine&notice=${notice}&lang=${lang}`);
 });
 
 // POST /delete-item/:id
@@ -199,9 +227,10 @@ router.post('/delete-item/:id', async (req, res) => {
   try {
     const currentUser = req.session.user;
     if (!currentUser) return res.redirect('/login');
+    const lang = req.query.lang === 'en' ? 'en' : 'zh';
     
     const item = await Item.findById(req.params.id);
-    if (!item) return res.redirect('/list');
+    if (!item) return res.redirect(`/list?lang=${lang}`);
     
     const isOwner = item.seller && item.seller.toString() === currentUser._id.toString();
     const isAdmin = currentUser.role === 'admin';
@@ -214,12 +243,11 @@ router.post('/delete-item/:id', async (req, res) => {
     console.log(`Item deleted: ${item.title} by ${currentUser.username}`);
     
     // Check the referrer to decide where to redirect
-    // If the user deleted from the market page, redirect back to market. Otherwise, redirect to 'my listings'.
     const referer = req.get('Referrer') || '';
     if (referer.includes('view=mine')) {
-      return res.redirect('/list?view=mine&notice=deleted');
+      return res.redirect(`/list?view=mine&notice=deleted&lang=${lang}`);
     } else {
-      return res.redirect('/list?notice=deleted');
+      return res.redirect(`/list?notice=deleted&lang=${lang}`);
     }
     
   } catch (err) {

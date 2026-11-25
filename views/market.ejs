@@ -1,28 +1,138 @@
 <%
   const { items, username, filters, view, editId, notice, isAdmin } = marketData;
+  
+  // ==========================================
+  // 🌐 i18n Language Setting
+  // ==========================================
+  const lang = typeof marketData.lang !== 'undefined' ? marketData.lang : 'zh'; // default to Chinese
+  const t = {
+    zh: {
+      home: '首页',
+      myListings: '我的发布',
+      logout: '登出',
+      addItem: '＋ 发布物品',
+      campusMarket: '校园市集',
+      titleLabel: '商品名称',
+      titlePlaceholder: '例如：教科书',
+      minPrice: '最低价 (HKD)',
+      maxPrice: '最高价 (HKD)',
+      search: '搜索',
+      allCategories: '全部分类',
+      allItems: '全部商品',
+      searchResults: '搜索结果',
+      itemsCount: '件商品',
+      clearFilters: '清除筛选',
+      emptyMarket: '市集目前没有商品。',
+      emptySearch: '没有符合筛选条件的商品。',
+      editItem: '编辑商品',
+      deleteItem: '删除商品',
+      confirmDelete: '确定要删除这件商品吗？',
+      viewDesc: '查看描述',
+      seller: '卖家',
+      sold: '已售出',
+      available: '在售',
+      backToMarket: '← 返回市集',
+      backToMine: '← 返回我的发布',
+      myListingsTitle: '我的发布',
+      emptyMine: '你还没有发布商品。',
+      edit: '编辑',
+      markSold: '标记售出',
+      relist: '重新上架',
+      confirmDeleteBtn: '确认删除',
+      deleteThisItem: '确定删除这件商品？',
+      latest: '最新发布',
+      // Add/Edit Form
+      addItemTitle: '发布物品',
+      editItemTitle: '编辑商品',
+      name: '名称',
+      description: '描述',
+      price: '价格 (HKD)',
+      category: '分类',
+      condition: '成色',
+      optional: '选填',
+      selectCategory: '请选择分类',
+      selectCondition: '请选择成色',
+      cancel: '取消',
+      publish: '发布商品',
+      save: '保存修改',
+    },
+    en: {
+      home: 'Home',
+      myListings: 'My Listings',
+      logout: 'Logout',
+      addItem: '＋ Add Item',
+      campusMarket: 'Campus Market',
+      titleLabel: 'Title',
+      titlePlaceholder: 'e.g., Textbook',
+      minPrice: 'Min Price (HKD)',
+      maxPrice: 'Max Price (HKD)',
+      search: 'Search',
+      allCategories: 'All Categories',
+      allItems: 'All Items',
+      searchResults: 'Search Results',
+      itemsCount: 'items',
+      clearFilters: 'Clear filters',
+      emptyMarket: 'The market currently has no items.',
+      emptySearch: 'No items match your search criteria.',
+      editItem: 'Edit Item',
+      deleteItem: 'Delete Item',
+      confirmDelete: 'Are you sure you want to delete this item?',
+      viewDesc: 'View Description',
+      seller: 'Seller',
+      sold: 'Sold',
+      available: 'Available',
+      backToMarket: '← Back to Market',
+      backToMine: '← Back to My Listings',
+      myListingsTitle: 'My Listings',
+      emptyMine: "You haven't published any items yet.",
+      edit: 'Edit',
+      markSold: 'Mark as Sold',
+      relist: 'Relist',
+      confirmDeleteBtn: 'Confirm Delete',
+      deleteThisItem: 'Delete this item?',
+      latest: 'Latest Listings',
+      // Add/Edit Form
+      addItemTitle: 'Add Item',
+      editItemTitle: 'Edit Item',
+      name: 'Title',
+      description: 'Description',
+      price: 'Price (HKD)',
+      category: 'Category',
+      condition: 'Condition',
+      optional: 'Optional',
+      selectCategory: 'Select Category',
+      selectCondition: 'Select Condition',
+      cancel: 'Cancel',
+      publish: 'Publish Item',
+      save: 'Save Changes',
+    }
+  };
+  const tr = t[lang];
+
   const categoryLabels = {
-    Books: 'Books & Textbooks',
-    Electronics: 'Electronics',
-    'Daily Necessities': 'Daily Necessities',
-    Sports: 'Sports & Outdoors',
-    Transportation: 'Transportation',
-    Furniture: 'Furniture',
-    Other: 'Other'
+    Books: lang === 'zh' ? '书籍教材' : 'Books & Textbooks',
+    Electronics: lang === 'zh' ? '数码配件' : 'Electronics',
+    'Daily Necessities': lang === 'zh' ? '生活用品' : 'Daily Necessities',
+    Sports: lang === 'zh' ? '运动户外' : 'Sports & Outdoors',
+    Transportation: lang === 'zh' ? '交通出行' : 'Transportation',
+    Furniture: lang === 'zh' ? '家具' : 'Furniture',
+    Other: lang === 'zh' ? '其他好物' : 'Other'
   };
   const conditionLabels = {
-    New: 'New',
-    'Like New': 'Like New',
-    'Very Good': 'Very Good',
-    Good: 'Good',
-    Fair: 'Fair'
+    New: lang === 'zh' ? '全新' : 'New',
+    'Like New': lang === 'zh' ? '九成新' : 'Like New',
+    'Very Good': lang === 'zh' ? '八成新' : 'Very Good',
+    Good: lang === 'zh' ? '七成新' : 'Good',
+    Fair: lang === 'zh' ? '有使用痕迹' : 'Fair'
   };
   const notices = {
-    created: 'Item published successfully.',
-    updated: 'Item details saved.',
-    deleted: 'Item deleted.',
-    sold: 'Item marked as sold.',
-    relisted: 'Item relisted.'
+    created: lang === 'zh' ? '商品已发布。' : 'Item published successfully.',
+    updated: lang === 'zh' ? '商品资料已保存。' : 'Item details saved.',
+    deleted: lang === 'zh' ? '商品已删除。' : 'Item deleted.',
+    sold: lang === 'zh' ? '商品已标记为售出。' : 'Item marked as sold.',
+    relisted: lang === 'zh' ? '商品已重新上架。' : 'Item relisted.'
   };
+
   const showForm = view === 'add' || view === 'edit';
   const editing = view === 'edit';
   const mine = view === 'mine';
@@ -31,6 +141,7 @@
   const fieldErrors = marketData.fieldErrors || {};
   const categoryLabel = value => Object.hasOwn(categoryLabels, value) ? categoryLabels[value] : value;
   const conditionLabel = value => Object.hasOwn(conditionLabels, value) ? conditionLabels[value] : value;
+  
   const categories = [...new Set([
     ...Object.keys(categoryLabels),
     ...items.map(item => item.category),
@@ -46,66 +157,36 @@
   });
   const filtered = Object.values(filters).some(value => value !== '' && value != null);
   const latest = view === 'market' && !filtered ? items.filter(item => item.status === 'Available').slice(0, 4) : [];
+  
+  // Append lang parameter to links
+  const langParam = lang === 'en' ? '&lang=en' : '';
   function categoryLink(category) {
     const parameters = new URLSearchParams();
     for (const [key, value] of Object.entries({ ...filters, category })) {
       if (value !== '' && value != null) parameters.set(key, value);
     }
+    if (lang === 'en') parameters.set('lang', 'en');
     return parameters.size ? '/list?' + parameters.toString() : '/list';
   }
 %>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= lang %>">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#ffffff">
-<title><%= showForm ? (editing ? 'Edit Item' : 'Add Item') : (mine ? 'My Listings' : 'Campus Market') %> · HKMU Market</title>
+<title><%= showForm ? (editing ? tr.editItemTitle : tr.addItemTitle) : (mine ? tr.myListingsTitle : tr.campusMarket) %> · HKMU Market</title>
 <style>
-:root {
-color-scheme: light;
---ink: #20262d;
---muted: #52616b;
---blue: #006b9f;
---blue-dark: #005880;
---light-blue: #eaf4fa;
---canvas: #f3f6f8;
---line: #dce5ea;
---white: #fff;
---error: #9c2929;
-    }
-
-* { box-sizing: border-box; }
-    [hidden] { display: none !important; }
-body {
-margin: 0;
-background: var(--canvas);
-color: var(--ink);
-font: 15px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif;
-    }
-a { color: var(--blue); text-decoration: none; }
-a:hover { text-decoration: underline; }
-button, input, select, textarea { font: inherit; }
-:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
-h1, h2, h3, p { margin: 0; }
-h1 { font-size: 25px; }
-h2 { font-size: 21px; }
-h3 { font-size: 16px; overflow-wrap: anywhere; }
+  /* 你的 CSS 保持不变 */
+:root { color-scheme: light; --ink: #20262d; --muted: #52616b; --blue: #006b9f; --blue-dark: #005880; --light-blue: #eaf4fa; --canvas: #f3f6f8; --line: #dce5ea; --white: #fff; --error: #9c2929; }
+* { box-sizing: border-box; } [hidden] { display: none !important; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font: 15px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }
+a { color: var(--blue); text-decoration: none; } a:hover { text-decoration: underline; }
+button, input, select, textarea { font: inherit; } :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+h1, h2, h3, p { margin: 0; } h1 { font-size: 25px; } h2 { font-size: 21px; } h3 { font-size: 16px; overflow-wrap: anywhere; }
 .wrap { width: min(100% - 40px, 1220px); margin-inline: auto; }
-.site-header {
-position: sticky;
-top: 0;
-z-index: 2;
-background: rgb(255 255 255 / 94%);
-border-bottom: 1px solid var(--line);
-backdrop-filter: blur(12px);
-    }
-.header-row, .header-navigation, .header-actions {
-display: flex;
-align-items: center;
-gap: 14px;
-flex-wrap: wrap;
-    }
+.site-header { position: sticky; top: 0; z-index: 2; background: rgb(255 255 255 / 94%); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
+.header-row, .header-navigation, .header-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .header-row { justify-content: space-between; min-height: 64px; padding-block: 9px; }
 .header-navigation, .header-actions { min-width: 0; }
 .brand { color: var(--blue); font-size: 14px; font-weight: 750; letter-spacing: .025em; }
@@ -114,74 +195,26 @@ flex-wrap: wrap;
 .signed-in { color: var(--muted); overflow-wrap: anywhere; }
 main { padding-block: 24px 48px; }
 .market-layout { display: grid; gap: 18px; }
-.action-button, .secondary-button {
-display: inline-flex;
-min-height: 38px;
-align-items: center;
-justify-content: center;
-border-radius: 7px;
-border: 1px solid var(--blue);
-background: var(--blue);
-color: var(--white);
-font-weight: 600;
-line-height: 1.2;
-padding: 8px 13px;
-cursor: pointer;
-    }
+.action-button, .secondary-button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid var(--blue); background: var(--blue); color: var(--white); font-weight: 600; line-height: 1.2; padding: 8px 13px; cursor: pointer; }
 .action-button:hover { color: var(--white); background: var(--blue-dark); text-decoration: none; }
 .secondary-button { background: var(--white); color: var(--blue); border-color: var(--line); }
 .secondary-button:hover { color: var(--blue); border-color: var(--blue); text-decoration: none; }
-.danger { color: var(--error); }
-.danger:hover { color: var(--error); border-color: var(--error); }
+.danger { color: var(--error); } .danger:hover { color: var(--error); border-color: var(--error); }
 button:disabled { opacity: .65; cursor: progress; }
-.filter-box, .form-panel, .item-card, .showcase-link, .my-listing, .empty-state {
-background: var(--white);
-border: 1px solid var(--line);
-    }
+.filter-box, .form-panel, .item-card, .showcase-link, .my-listing, .empty-state { background: var(--white); border: 1px solid var(--line); }
 .filter-box { padding: 15px; border-radius: 14px; }
 .search-form { display: grid; grid-template-columns: minmax(0, 3fr) repeat(2, minmax(0, 1fr)) auto; align-items: end; gap: 10px; }
 .field { display: grid; gap: 5px; min-width: 0; }
-.field label { font-weight: 600; }
-.field small { color: var(--muted); font-weight: 400; }
-.field input, .field select, .field textarea {
-width: 100%;
-min-width: 0;
-min-height: 39px;
-border: 1px solid var(--line);
-border-radius: 8px;
-color: var(--ink);
-background: #f9fbfc;
-padding: 8px 10px;
-    }
+.field label { font-weight: 600; } .field small { color: var(--muted); font-weight: 400; }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; min-height: 39px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #f9fbfc; padding: 8px 10px; }
 .field textarea { min-height: 110px; resize: vertical; }
 .field :is(input, textarea, select):focus { border-color: var(--blue); }
 .field [aria-invalid="true"] { border-color: var(--error); }
 .field-error { color: var(--error); font-size: .9em; }
 .category-filters { display: flex; flex-wrap: wrap; gap: 8px; }
-.category-chip {
-display: inline-flex;
-min-height: 38px;
-align-items: center;
-padding: 5px 13px;
-border: 1px solid var(--line);
-border-radius: 10px;
-color: var(--ink);
-background: #f0f2f3;
-overflow-wrap: anywhere;
-    }
-.category-chip:hover, .category-chip[aria-current="true"] {
-border-color: #b7d7e8;
-background: var(--light-blue);
-color: var(--blue);
-text-decoration: none;
-    }
-.section-head, .item-bottom, .heading-row {
-display: flex;
-align-items: center;
-justify-content: space-between;
-flex-wrap: wrap;
-gap: 8px;
-    }
+.category-chip { display: inline-flex; min-height: 38px; align-items: center; padding: 5px 13px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #f0f2f3; overflow-wrap: anywhere; }
+.category-chip:hover, .category-chip[aria-current="true"] { border-color: #b7d7e8; background: var(--light-blue); color: var(--blue); text-decoration: none; }
+.section-head, .item-bottom, .heading-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .section-head { margin-bottom: 10px; }
 .section-head p, .detail-copy p, .seller, .form-heading p { color: var(--muted); }
 .showcase-grid, .items { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -190,25 +223,10 @@ gap: 8px;
 .showcase-info { display: flex; min-height: 98px; flex-direction: column; justify-content: center; gap: 6px; padding: 10px 13px; }
 .item-card { overflow: hidden; min-width: 0; border-radius: 16px; box-shadow: 0 3px 12px rgb(24 43 54 / 4%); scroll-margin-top: 90px; display: flex; flex-direction: column; }
 .item-cover { min-height: 110px; }
-.item-cover, .showcase-cover, .my-listing-cover {
-display: grid;
-place-items: center;
-background: linear-gradient(145deg, #f5f8fa, #e8eef2);
-color: #728692;
-    }
+.item-cover, .showcase-cover, .my-listing-cover { display: grid; place-items: center; background: linear-gradient(145deg, #f5f8fa, #e8eef2); color: #728692; }
 .placeholder-icon { font-size: 29px; line-height: 1; }
 .item-content { display: grid; gap: 9px; min-width: 0; padding: 12px 15px 13px; flex: 1; }
-.item-category, .listing-status, .condition-label {
-width: fit-content;
-max-width: 100%;
-padding: 2px 7px;
-border-radius: 6px;
-background: var(--light-blue);
-color: var(--blue);
-font-size: 12px;
-line-height: 1.5;
-overflow-wrap: anywhere;
-    }
+.item-category, .listing-status, .condition-label { width: fit-content; max-width: 100%; padding: 2px 7px; border-radius: 6px; background: var(--light-blue); color: var(--blue); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .listing-status.sold, .condition-label { background: #eff2f4; color: var(--muted); }
 .price { font-size: 19px; font-weight: 700; }
 .detail-copy { border-top: 1px solid var(--line); padding-top: 7px; }
@@ -227,14 +245,7 @@ overflow-wrap: anywhere;
 #listing-error { margin-bottom: 16px; }
 .form-error { border: 1px solid #e9b9b9; background: #fff3f3; color: var(--error); }
 .my-listings-list { display: grid; gap: 10px; margin-top: 14px; }
-.my-listing {
-display: grid;
-grid-template-columns: 62px minmax(0, 1fr) auto;
-align-items: center;
-gap: 12px;
-border-radius: 12px;
-padding: 11px;
-    }
+.my-listing { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; align-items: center; gap: 12px; border-radius: 12px; padding: 11px; }
 .my-listing-cover { min-height: 60px; border-radius: 7px; }
 .my-listing h2 { font-size: 16px; overflow-wrap: anywhere; }
 .my-listing-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
@@ -242,54 +253,27 @@ padding: 11px;
 .delete-confirm { display: inline-flex; position: relative; }
 .delete-confirm > summary { list-style: none; }
 .delete-confirm > summary::-webkit-details-marker { display: none; }
-.delete-panel {
-position: absolute;
-right: 0;
-top: calc(100% + 6px);
-z-index: 1;
-width: min(245px, 75vw);
-padding: 12px;
-border: 1px solid var(--line);
-background: var(--white);
-border-radius: 8px;
-box-shadow: 0 8px 20px rgb(24 43 54 / 12%);
-    }
+.delete-panel { position: absolute; right: 0; top: calc(100% + 6px); z-index: 1; width: min(245px, 75vw); padding: 12px; border: 1px solid var(--line); background: var(--white); border-radius: 8px; box-shadow: 0 8px 20px rgb(24 43 54 / 12%); }
 .delete-panel form { margin-top: 8px; }
 .card-edit { justify-self: start; }
-
-@media (max-width: 930px) {
-.showcase-grid, .items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-@media (max-width: 640px) {
-.wrap { width: calc(100% - 24px); }
-.site-header { position: static; }
-.header-row, .header-navigation, .header-actions { gap: 5px; }
-.header-row { align-items: start; }
-main { padding-block: 18px 36px; }
-.search-form { grid-template-columns: 1fr 1fr; }
-.search-form > .search-field, .search-form > button { grid-column: 1 / -1; }
-.my-listing { grid-template-columns: 46px minmax(0, 1fr); }
-.my-listing .listing-actions { grid-column: 2; }
-.my-listing-cover { min-height: 49px; }
-.form-panel { padding: 16px; }
-    }
-@media (max-width: 390px) {
-.showcase-grid, .items, .publish-form { grid-template-columns: 1fr; }
-    }
+@media (max-width: 930px) { .showcase-grid, .items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .wrap { width: calc(100% - 24px); } .site-header { position: static; } .header-row, .header-navigation, .header-actions { gap: 5px; } .header-row { align-items: start; } main { padding-block: 18px 36px; } .search-form { grid-template-columns: 1fr 1fr; } .search-form > .search-field, .search-form > button { grid-column: 1 / -1; } .my-listing { grid-template-columns: 46px minmax(0, 1fr); } .my-listing .listing-actions { grid-column: 2; } .my-listing-cover { min-height: 49px; } .form-panel { padding: 16px; } }
+@media (max-width: 390px) { .showcase-grid, .items, .publish-form { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <header class="site-header">
 <div class="wrap header-row">
 <nav class="header-navigation" aria-label="Main navigation">
-<a class="brand" href="/list">HKMU MARKET</a>
-<a class="nav-button" href="/list"<% if (view === 'market') { %> aria-current="page"<% } %>>Home</a>
-<a class="nav-button" href="/list?view=mine"<% if (mine) { %> aria-current="page"<% } %>>My Listings</a>
+<a class="brand" href="/list?lang=<%= lang %>">HKMU MARKET</a>
+<a class="nav-button" href="/list?lang=<%= lang %>"<% if (view === 'market') { %> aria-current="page"<% } %>><%= tr.home %></a>
+<a class="nav-button" href="/list?view=mine&lang=<%= lang %>"<% if (mine) { %> aria-current="page"<% } %>><%= tr.myListings %></a>
 </nav>
 <div class="header-actions">
 <span class="signed-in"><%= username %></span>
-<a class="nav-button" href="/logout">Logout</a>
-<a class="action-button" href="/add">＋ Add Item</a>
+<a class="nav-button" href="/list?lang=<%= lang === 'zh' ? 'en' : 'zh' %>"><%= lang === 'zh' ? 'EN' : '中文' %></a>
+<a class="nav-button" href="/logout"><%= tr.logout %></a>
+<a class="action-button" href="/add?lang=<%= lang %>"><%= tr.addItem %></a>
 </div>
 </div>
 </header>
@@ -302,29 +286,29 @@ main { padding-block: 18px 36px; }
 <% if (showForm) { %>
 <section class="form-panel" aria-labelledby="form-title">
 <div class="form-heading">
-<a href="<%= editing ? '/list?view=mine' : '/list' %>">← <%= editing ? 'Back to My Listings' : 'Back to Market' %></a>
-<h1 id="form-title"><%= editing ? 'Edit Item' : 'Add Item' %></h1>
+<a href="<%= editing ? '/list?view=mine&lang=' + lang : '/list?lang=' + lang %>"><%= editing ? tr.backToMine : tr.backToMarket %></a>
+<h1 id="form-title"><%= editing ? tr.editItemTitle : tr.addItemTitle %></h1>
 </div>
 <form class="publish-form" id="publish-form" method="post" action="<%= editing ? '/edit/' + encodeURIComponent(editId) : '/add' %>">
 <div class="field field-wide">
-<label for="title">Title</label>
+<label for="title"><%= tr.name %></label>
 <input id="title" name="title" type="text" value="<%= formValues.title ?? '' %>" maxlength="<%= Math.max(60, selectedItem.title?.length || 0) %>" required aria-describedby="title-error"<% if (fieldErrors.title) { %> aria-invalid="true"<% } %>>
 <p class="field-error" id="title-error"<% if (!fieldErrors.title) { %> hidden<% } %>><%= fieldErrors.title || '' %></p>
 </div>
 <div class="field field-wide">
-<label for="description">Description</label>
+<label for="description"><%= tr.description %></label>
 <textarea id="description" name="description" maxlength="<%= Math.max(300, selectedItem.description?.length || 0) %>" required aria-describedby="description-error"<% if (fieldErrors.description) { %> aria-invalid="true"<% } %>><%= formValues.description ?? '' %></textarea>
 <p class="field-error" id="description-error"<% if (!fieldErrors.description) { %> hidden<% } %>><%= fieldErrors.description || '' %></p>
 </div>
 <div class="field">
-<label for="price">Price (HKD)</label>
+<label for="price"><%= tr.price %></label>
 <input id="price" name="price" type="number" value="<%= formValues.price ?? '' %>" min="0" step="any" required aria-describedby="price-error"<% if (fieldErrors.price) { %> aria-invalid="true"<% } %>>
 <p class="field-error" id="price-error"<% if (!fieldErrors.price) { %> hidden<% } %>><%= fieldErrors.price || '' %></p>
 </div>
 <div class="field">
-<label for="category">Category</label>
+<label for="category"><%= tr.category %></label>
 <select id="category" name="category" required aria-describedby="category-error"<% if (fieldErrors.category) { %> aria-invalid="true"<% } %>>
-<option value=""<% if (!formValues.category) { %> selected<% } %> disabled>Select Category</option>
+<option value=""<% if (!formValues.category) { %> selected<% } %> disabled><%= tr.selectCategory %></option>
 <% for (const category of categories) { %>
 <option value="<%= category %>"<% if (formValues.category === category) { %> selected<% } %>><%= categoryLabel(category) %></option>
 <% } %>
@@ -332,9 +316,9 @@ main { padding-block: 18px 36px; }
 <p class="field-error" id="category-error"<% if (!fieldErrors.category) { %> hidden<% } %>><%= fieldErrors.category || '' %></p>
 </div>
 <div class="field">
-<label for="condition">Condition <small>Optional</small></label>
+<label for="condition"><%= tr.condition %> <small><%= tr.optional %></small></label>
 <select id="condition" name="condition" aria-describedby="condition-error"<% if (fieldErrors.condition) { %> aria-invalid="true"<% } %>>
-<option value="">Select Condition</option>
+<option value=""><%= tr.selectCondition %></option>
 <% for (const condition of conditions) { %>
 <option value="<%= condition %>"<% if (formValues.condition === condition) { %> selected<% } %>><%= conditionLabel(condition) %></option>
 <% } %>
@@ -343,16 +327,16 @@ main { padding-block: 18px 36px; }
 </div>
 <p class="form-error" id="publish-error" role="alert"<% if (!marketData.error) { %> hidden<% } %>><%= marketData.error || '' %></p>
 <div class="form-actions">
-<a class="secondary-button" href="<%= editing ? '/list?view=mine' : '/list' %>">Cancel</a>
-<button class="action-button" type="submit"><%= editing ? 'Save Changes' : 'Publish Item' %></button>
+<a class="secondary-button" href="<%= editing ? '/list?view=mine&lang=' + lang : '/list?lang=' + lang %>"><%= tr.cancel %></a>
+<button class="action-button" type="submit"><%= editing ? tr.save : tr.publish %></button>
 </div>
 </form>
 </section>
 <% } else if (mine) { %>
 <section id="my-listings-view" aria-labelledby="my-listings-heading">
 <div class="heading-row">
-<h1 id="my-listings-heading">My Listings</h1>
-<a href="/list">← Back to Market</a>
+<h1 id="my-listings-heading"><%= tr.myListingsTitle %></h1>
+<a href="/list?lang=<%= lang %>"><%= tr.backToMarket %></a>
 </div>
 <div class="my-listings-list">
 <% for (const item of items) { %>
@@ -363,27 +347,27 @@ main { padding-block: 18px 36px; }
 <h2><%= item.title %></h2>
 <div class="my-listing-meta">
 <span class="price"><%= priceFormat.format(item.price) %></span>
-<span class="listing-status<%= sold ? ' sold' : '' %>"><%= sold ? 'Sold' : 'Available' %></span>
+<span class="listing-status<%= sold ? ' sold' : '' %>"><%= sold ? tr.sold : tr.available %></span>
 <span class="item-category"><%= categoryLabel(item.category) %></span>
 </div>
 </div>
 <div class="listing-actions">
 <% if (item.isOwner || isAdmin) { %>
-<a class="secondary-button" href="/edit/<%= id %>">Edit</a>
+<a class="secondary-button" href="/edit/<%= id %>?lang=<%= lang %>"><%= tr.edit %></a>
 <% } %>
 <% if (item.isOwner || isAdmin) { %>
-<form action="/items/<%= id %>/status" method="post">
+<form action="/items/<%= id %>/status?lang=<%= lang %>" method="post">
 <input type="hidden" name="status" value="<%= sold ? 'Available' : 'Sold' %>">
-<button class="secondary-button" type="submit"><%= sold ? 'Relist' : 'Mark as Sold' %></button>
+<button class="secondary-button" type="submit"><%= sold ? tr.relist : tr.markSold %></button>
 </form>
 <% } %>
 <% if (item.isOwner || isAdmin) { %>
 <details class="delete-confirm">
-<summary class="secondary-button danger">Delete</summary>
+<summary class="secondary-button danger"><%= tr.deleteItem %></summary>
 <div class="delete-panel">
-<p>Delete this item?</p>
-<form action="/delete-item/<%= id %>" method="post">
-<button class="secondary-button danger" type="submit">Confirm Delete</button>
+<p><%= tr.deleteThisItem %></p>
+<form action="/delete-item/<%= id %>?lang=<%= lang %>" method="post">
+<button class="secondary-button danger" type="submit"><%= tr.confirmDeleteBtn %></button>
 </form>
 </div>
 </details>
@@ -391,33 +375,34 @@ main { padding-block: 18px 36px; }
 </div>
 </article>
 <% } %>
-<% if (!items.length) { %><p class="empty-state">You haven't published any items yet.</p><% } %>
+<% if (!items.length) { %><p class="empty-state"><%= tr.emptyMine %></p><% } %>
 </div>
 </section>
 <% } else { %>
 <section class="market-layout" id="market-view" aria-labelledby="market-title">
-<h1 id="market-title">Campus Market</h1>
+<h1 id="market-title"><%= tr.campusMarket %></h1>
 <div class="filter-box">
 <form class="search-form" id="search-form" method="get" action="/list" aria-label="Search items">
+<input type="hidden" name="lang" value="<%= lang %>">
 <% if (filters.category) { %><input type="hidden" name="category" value="<%= filters.category %>"><% } %>
 <div class="field search-field">
-<label for="search">Title</label>
-<input id="search" name="title" type="search" maxlength="60" value="<%= filters.title ?? '' %>" placeholder="e.g., Textbook">
+<label for="search"><%= tr.titleLabel %></label>
+<input id="search" name="title" type="search" maxlength="60" value="<%= filters.title ?? '' %>" placeholder="<%= tr.titlePlaceholder %>">
 </div>
 <div class="field">
-<label for="min-price">Min Price (HKD)</label>
+<label for="min-price"><%= tr.minPrice %></label>
 <input id="min-price" name="minPrice" type="number" min="0" step="any" value="<%= filters.minPrice ?? '' %>">
 </div>
 <div class="field">
-<label for="max-price">Max Price (HKD)</label>
+<label for="max-price"><%= tr.maxPrice %></label>
 <input id="max-price" name="maxPrice" type="number" min="0" step="any" value="<%= filters.maxPrice ?? '' %>">
 </div>
-<button class="action-button" type="submit">Search</button>
+<button class="action-button" type="submit"><%= tr.search %></button>
 </form>
 </div>
 <% if (latest.length) { %>
 <section aria-labelledby="showcase-title">
-<div class="section-head"><h2 id="showcase-title">Latest Listings</h2></div>
+<div class="section-head"><h2 id="showcase-title"><%= tr.latest %></h2></div>
 <div class="showcase-grid">
 <% for (const item of latest) { %>
 <a class="showcase-link" href="#item-<%= encodeURIComponent(item._id) %>">
@@ -429,15 +414,15 @@ main { padding-block: 18px 36px; }
 </section>
 <% } %>
 <nav class="category-filters" aria-label="Item Categories">
-<a class="category-chip" href="<%= categoryLink('') %>"<% if (!filters.category) { %> aria-current="true"<% } %>>All Categories</a>
+<a class="category-chip" href="<%= categoryLink('') %>"<% if (!filters.category) { %> aria-current="true"<% } %>><%= tr.allCategories %></a>
 <% for (const category of categories) { %>
 <a class="category-chip" href="<%= categoryLink(category) %>"<% if (filters.category === category) { %> aria-current="true"<% } %>><%= categoryLabel(category) %></a>
 <% } %>
 </nav>
 <section aria-labelledby="list-title">
 <div class="section-head">
-<h2 id="list-title"><%= filtered ? 'Search Results' : 'All Items' %></h2>
-<p id="result-count"><%= items.length %> items <% if (filtered) { %>· <a href="/list">Clear filters</a><% } %></p>
+<h2 id="list-title"><%= filtered ? tr.searchResults : tr.allItems %></h2>
+<p id="result-count"><%= items.length %> <%= tr.itemsCount %> <% if (filtered) { %>· <a href="/list?lang=<%= lang %>"><%= tr.clearFilters %></a><% } %></p>
 </div>
 <% if (items.length) { %>
 <div class="items" id="items">
@@ -448,37 +433,36 @@ main { padding-block: 18px 36px; }
 <div class="item-content">
 <div class="item-bottom">
 <span class="item-category"><%= categoryLabel(item.category) %></span>
-<span class="listing-status<%= sold ? ' sold' : '' %>"><%= sold ? 'Sold' : 'Available' %></span>
+<span class="listing-status<%= sold ? ' sold' : '' %>"><%= sold ? tr.sold : tr.available %></span>
 </div>
 <h3><%= item.title %></h3>
 <div class="item-bottom">
 <span class="price"><%= priceFormat.format(item.price) %></span>
 <% if (item.condition) { %><span class="condition-label"><%= conditionLabel(item.condition) %></span><% } %>
 </div>
-<% if (item.sellerName) { %><p class="seller">Seller: <%= item.sellerName %></p><% } %>
+<% if (item.sellerName) { %><p class="seller"><%= tr.seller %>: <%= item.sellerName %></p><% } %>
 <details class="detail-copy">
-<summary>View Description</summary>
+<summary><%= tr.viewDesc %></summary>
 <p><%= item.description %></p>
 </details>
 <!-- 👇 Added delete button for the owner 👇 -->
 <% if (item.isOwner || isAdmin) { %>
 <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px;">
-<a class="card-edit" href="/edit/<%= id %>" style="color: var(--blue); text-decoration: none;">Edit Item</a>
-<form action="/delete-item/<%= id %>" method="post" style="margin: 0;">
-<button type="submit" class="danger" style="background: none; border: none; padding: 0; cursor: pointer; text-decoration: underline; font-size: inherit;" onclick="return confirm('Are you sure you want to delete this item?');">
-                            Delete Item
+<a class="card-edit" href="/edit/<%= id %>?lang=<%= lang %>" style="color: var(--blue); text-decoration: none;"><%= tr.editItem %></a>
+<form action="/delete-item/<%= id %>?lang=<%= lang %>" method="post" style="margin: 0;">
+<button type="submit" class="danger" style="background: none; border: none; padding: 0; cursor: pointer; text-decoration: underline; font-size: inherit;" onclick="return confirm('<%= tr.confirmDelete %>');">
+                            <%= tr.deleteItem %>
 </button>
 </form>
 </div>
 <% } %>
 <!-- 👆 Added delete button for the owner 👆 -->
-
 </div>
 </article>
 <% } %>
 </div>
 <% } else { %>
-<p class="empty-state" id="empty-state" role="status"><%= filtered ? 'No items match your search criteria.' : 'The market currently has no items.' %></p>
+<p class="empty-state" id="empty-state" role="status"><%= filtered ? tr.emptySearch : tr.emptyMarket %></p>
 <% } %>
 </section>
 </section>
