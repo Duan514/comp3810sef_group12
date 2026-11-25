@@ -27,7 +27,8 @@ router.get('/list', async (req, res) => {
   }
 
   const view = req.query.view === 'mine' ? 'mine' : 'market';
-  const lang = req.query.lang === 'en' ? 'en' : 'zh'; // Read language parameter
+  // ✅ 默认语言改为英文 'en'
+  const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   
   const filters = {
     title: textValue(req.query.title),
@@ -45,7 +46,7 @@ router.get('/list', async (req, res) => {
       filters,
       view,
       items: [],
-      lang, // Pass lang
+      lang,
       error: lang === 'zh' ? '请输入有效的价格范围。' : 'Enter a valid price range.'
     });
   }
@@ -69,7 +70,7 @@ router.get('/list', async (req, res) => {
     filters,
     view,
     items,
-    lang, // Pass lang
+    lang, 
     isAdmin: currentUser.role === 'admin'
   });
 });
@@ -78,7 +79,8 @@ router.get('/list', async (req, res) => {
 router.get('/add', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  const lang = req.query.lang === 'en' ? 'en' : 'zh';
+  // ✅ 默认语言改为英文 'en'
+  const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   renderMarket(req, res, {
     username: currentUser.username,
     view: 'add',
@@ -92,7 +94,8 @@ router.get('/add', async (req, res) => {
 router.post('/add', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  const lang = req.query.lang === 'en' ? 'en' : 'zh';
+  // ✅ 默认语言改为英文 'en'
+  const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   const { title, description, price, category, condition } = req.body;
   const fieldErrors = {};
   
@@ -137,7 +140,8 @@ router.post('/add', async (req, res) => {
 router.get('/edit/:id', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  const lang = req.query.lang === 'en' ? 'en' : 'zh';
+  // ✅ 默认语言改为英文 'en'
+  const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   
   const item = await Item.findById(req.params.id).populate('seller');
   if (!item) return res.status(404).send('Item not found');
@@ -159,7 +163,8 @@ router.get('/edit/:id', async (req, res) => {
 router.post('/edit/:id', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  const lang = req.query.lang === 'en' ? 'en' : 'zh';
+  // ✅ 默认语言改为英文 'en'
+  const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   const { title, description, price, category, condition } = req.body;
   const fieldErrors = {};
   
@@ -208,7 +213,8 @@ router.post('/edit/:id', async (req, res) => {
 router.post('/items/:id/status', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  const lang = req.query.lang === 'en' ? 'en' : 'zh';
+  // ✅ 默认语言改为英文 'en'
+  const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   const { status } = req.body;
   if (!['Available','Sold'].includes(status)) return res.status(400).send('Invalid status');
   const item = await Item.findById(req.params.id);
@@ -227,7 +233,8 @@ router.post('/delete-item/:id', async (req, res) => {
   try {
     const currentUser = req.session.user;
     if (!currentUser) return res.redirect('/login');
-    const lang = req.query.lang === 'en' ? 'en' : 'zh';
+    // ✅ 默认语言改为英文 'en'
+    const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
     
     const item = await Item.findById(req.params.id);
     if (!item) return res.redirect(`/list?lang=${lang}`);

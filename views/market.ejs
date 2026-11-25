@@ -4,7 +4,8 @@
   // ==========================================
   // 🌐 i18n Language Setting
   // ==========================================
-  const lang = typeof marketData.lang !== 'undefined' ? marketData.lang : 'zh'; // default to Chinese
+  // ✅ 默认语言改为英文 'en'
+  const lang = typeof marketData.lang !== 'undefined' ? marketData.lang : 'en'; 
   const t = {
     zh: {
       home: '首页',
@@ -41,7 +42,6 @@
       confirmDeleteBtn: '确认删除',
       deleteThisItem: '确定删除这件商品？',
       latest: '最新发布',
-      // Add/Edit Form
       addItemTitle: '发布物品',
       editItemTitle: '编辑商品',
       name: '名称',
@@ -91,7 +91,6 @@
       confirmDeleteBtn: 'Confirm Delete',
       deleteThisItem: 'Delete this item?',
       latest: 'Latest Listings',
-      // Add/Edit Form
       addItemTitle: 'Add Item',
       editItemTitle: 'Edit Item',
       name: 'Title',
@@ -158,7 +157,6 @@
   const filtered = Object.values(filters).some(value => value !== '' && value != null);
   const latest = view === 'market' && !filtered ? items.filter(item => item.status === 'Available').slice(0, 4) : [];
   
-  // Append lang parameter to links
   const langParam = lang === 'en' ? '&lang=en' : '';
   function categoryLink(category) {
     const parameters = new URLSearchParams();
@@ -177,7 +175,6 @@
 <meta name="theme-color" content="#ffffff">
 <title><%= showForm ? (editing ? tr.editItemTitle : tr.addItemTitle) : (mine ? tr.myListingsTitle : tr.campusMarket) %> · HKMU Market</title>
 <style>
-  /* 你的 CSS 保持不变 */
 :root { color-scheme: light; --ink: #20262d; --muted: #52616b; --blue: #006b9f; --blue-dark: #005880; --light-blue: #eaf4fa; --canvas: #f3f6f8; --line: #dce5ea; --white: #fff; --error: #9c2929; }
 * { box-sizing: border-box; } [hidden] { display: none !important; }
 body { margin: 0; background: var(--canvas); color: var(--ink); font: 15px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }
@@ -445,7 +442,6 @@ button:disabled { opacity: .65; cursor: progress; }
 <summary><%= tr.viewDesc %></summary>
 <p><%= item.description %></p>
 </details>
-<!-- 👇 Added delete button for the owner 👇 -->
 <% if (item.isOwner || isAdmin) { %>
 <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px;">
 <a class="card-edit" href="/edit/<%= id %>?lang=<%= lang %>" style="color: var(--blue); text-decoration: none;"><%= tr.editItem %></a>
@@ -456,7 +452,6 @@ button:disabled { opacity: .65; cursor: progress; }
 </form>
 </div>
 <% } %>
-<!-- 👆 Added delete button for the owner 👆 -->
 </div>
 </article>
 <% } %>
