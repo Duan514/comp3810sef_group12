@@ -1,12 +1,11 @@
 // Auth routes: Register / Email verification / Resend code / Login / Forgot password / Reset password / Logout
-// Note: This file replaces the old routes/user.js (which is the User Schema and read-only)
 const express = require('express');
 const crypto = require('crypto');
 const User = require('../models/User');
 
 const router = express.Router();
 
-// ---------- Mail sender (lazy load nodemailer: fallback to console if not installed or SMTP not configured) ----------
+// ---------- Mail sender (lazy load nodemailer) ----------
 let nodemailer = null;
 try {
     nodemailer = require('nodemailer');
@@ -14,7 +13,7 @@ try {
     nodemailer = null;
 }
 
-// 优先读取全局常量（server.js里定义的），没有则读取环境变量
+// Read global constants (defined in server.js) or environment variables
 const smtpHost = typeof SMTP_HOST !== 'undefined' ? SMTP_HOST : process.env.SMTP_HOST;
 const smtpPort = typeof SMTP_PORT !== 'undefined' ? SMTP_PORT : process.env.SMTP_PORT;
 const smtpSecure = typeof SMTP_SECURE !== 'undefined' ? SMTP_SECURE : process.env.SMTP_SECURE;
@@ -23,46 +22,45 @@ const smtpPass = typeof SMTP_PASS !== 'undefined' ? SMTP_PASS : process.env.SMTP
 const mailFrom = typeof MAIL_FROM !== 'undefined' ? MAIL_FROM : process.env.MAIL_FROM;
 
 const transporter = (nodemailer && smtpHost)
-    ? nodemailer.createTransport({
-        host: smtpHost,
-        port: Number(smtpPort || 465),
-        secure: String(smtpSecure || 'true') === 'true',
-        auth: { user: smtpUser, pass: smtpPass }
-    })
-    : null;
+? nodemailer.createTransport({
+host: smtpHost,
+port: Number(smtpPort || 465),
+secure: String(smtpSecure || 'true') === 'true',
+auth: { user: smtpUser, pass: smtpPass }
+})
+: null;
 
 async function sendMail(to, subject, html) {
-    if (!transporter) {
+if (!transporter) {
         console.warn('[mail] SMTP not configured or nodemailer missing, mail content printed to console');
         console.log('  To      :', to);
         console.log('  Subject :', subject);
         console.log('  Content :', html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
-        return false;
+return false;
     }
-    try {
-        await transporter.sendMail({
-            from: mailFrom || smtpUser,
-            to: to,
-            subject: subject,
-            html: html
+try {
+await transporter.sendMail({
+from: mailFrom || smtpUser,
+to: to,
+subject: subject,
+html: html
         });
-        // Print mail info to console after successful delivery for debugging
         console.log('[mail] ✅ Email sent successfully');
         console.log('  To      :', to);
         console.log('  Subject :', subject);
         console.log('  Content :', html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
-        return true;
+return true;
     } catch (err) {
         console.warn('[mail] Failed to send, fallback to console:', err.message);
         console.log('  To      :', to);
         console.log('  Subject :', subject);
         console.log('  Content :', html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
-        return false;
+return false;
     }
 }
 
 function sixDigitCode() {
-    return String(Math.floor(100000 + Math.random() * 900000));
+return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 // ---------- Page routes ----------
@@ -72,32 +70,32 @@ router.get('/register', (req, res) => res.render('register', { message: null }))
 
 // ---------- Register ----------
 router.post('/doRegister', async (req, res) => {
-    const body = req.body || {};
-    const username = body.username;
-    const password = body.password;
-    const email = body.email;
+const body = req.body || {};
+const username = body.username;
+const password = body.password;
+const email = body.email;
 
-    try {
-        if (!username || !password || !email) {
-            return res.render('register', { message: 'Please fill in username, password and email.' });
+try {
+if (!username || !password || !email) {
+return res.render('register', { message: 'Please fill in username, password and email.' });
         }
-        // Only check duplicate username; email allows multiple registrations
-        if (await User.findOne({ username: username })) {
-            return res.render('register', { message: 'This username is taken, please choose another.' });
+// ONLY check duplicate username (allowing unlimited same email registration)
+if (await User.findOne({ username: username })) {
+return res.render('register', { message: 'This username is taken, please choose another.' });
         }
 
-        const code = sixDigitCode();
-        await User.create({
-            username: username,
-            email: email,
-            password: User.hashPassword(password),
-            verificationCode: code,
-            verificationCodeExpires: new Date(Date.now() + 10 * 60 * 1000),
-            isVerified: false
+const code = sixDigitCode();
+await User.create({
+username: username,
+email: email,
+password: User.hashPassword(password),
+verificationCode: code,
+verificationCodeExpires: new Date(Date.now() + 10 * 60 * 1000),
+isVerified: false
         });
 
-        await sendMail(email, '[HKMU Second-hand] Registration Verification Code',
-            '<p>Your verification code is: <b>' + code + '</b>. Valid for 10 minutes. Do not share it.</p>');
+await sendMail(email, '[HKMU Second-hand] Registration Verification Code',
+'<p>Your verification code is: <b>' + code + '</b>. Valid for 10 minutes. Do not share it.</p>');
 
         res.redirect('/verify?email=' + encodeURIComponent(email));
     } catch (err) {
@@ -112,47 +110,49 @@ router.get('/verify', (req, res) => {
 });
 
 router.post('/doVerify', async (req, res) => {
-    const body = req.body || {};
-    const email = body.email;
-    const cleanCode = String(body.code || '').trim();
-    const user = await User.findOne({ email: email });
+const body = req.body || {};
+const email = body.email;
+const cleanCode = String(body.code || '').trim();
+// ADDED .sort({ _id: -1 }) TO FIND THE LATEST REGISTERED ACCOUNT
+const user = await User.findOne({ email: email }).sort({ _id: -1 });
 
-    if (!user) return res.status(400).send('User not found');
+if (!user) return res.status(400).send('User not found');
 
-    const expired = user.verificationCodeExpires && user.verificationCodeExpires.getTime() < Date.now();
-    if (expired) {
-        return res.render('verify', { email: email, message: 'Verification code expired, please resend.' });
+const expired = user.verificationCodeExpires && user.verificationCodeExpires.getTime() < Date.now();
+if (expired) {
+return res.render('verify', { email: email, message: 'Verification code expired, please resend.' });
     }
-    if (user.verificationCode !== cleanCode) {
-        return res.render('verify', { email: email, message: 'Incorrect code, please try again.' });
+if (user.verificationCode !== cleanCode) {
+return res.render('verify', { email: email, message: 'Incorrect code, please try again.' });
     }
 
     user.isVerified = true;
     user.verificationCode = undefined;
     user.verificationCodeExpires = undefined;
-    await user.save();
+await user.save();
     res.redirect('/login');
 });
 
-// ---------- Resend verification code (called by fetch from verify.ejs, JSON response) ----------
+// ---------- Resend verification code ----------
 router.post('/resend-code', async (req, res) => {
-    try {
-        const email = (req.body || {}).email;
-        const user = await User.findOne({ email: email });
-        if (!user) return res.json({ success: false, message: 'No account found with this email' });
-        if (user.isVerified) return res.json({ success: false, message: 'This email is already verified' });
+try {
+const email = (req.body || {}).email;
+// ADDED .sort({ _id: -1 }) TO FIND THE LATEST REGISTERED ACCOUNT
+const user = await User.findOne({ email: email }).sort({ _id: -1 });
+if (!user) return res.json({ success: false, message: 'No account found with this email' });
+if (user.isVerified) return res.json({ success: false, message: 'This email is already verified' });
 
-        const code = sixDigitCode();
+const code = sixDigitCode();
         user.verificationCode = code;
         user.verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
-        await user.save();
+await user.save();
 
-        const sent = await sendMail(email, '[HKMU Second-hand] New Verification Code',
-            '<p>Your new verification code is: <b>' + code + '</b>. Valid for 10 minutes.</p>');
+const sent = await sendMail(email, '[HKMU Second-hand] New Verification Code',
+'<p>Your new verification code is: <b>' + code + '</b>. Valid for 10 minutes.</p>');
 
         res.json({
-            success: true,
-            message: sent ? 'Verification code resent' : 'Mail service not configured, code printed to server console'
+success: true,
+message: sent ? 'Verification code resent' : 'Mail service not configured, code printed to server console'
         });
     } catch (err) {
         console.error('Failed to resend code:', err.message);
@@ -160,23 +160,35 @@ router.post('/resend-code', async (req, res) => {
     }
 });
 
-// ---------- Login (password hash check + verified status check) ----------
+// ---------- Login ----------
 router.post('/doLogin', async (req, res) => {
-    const body = req.body || {};
-    const username = body.username;
-    const password = body.password;
+const body = req.body || {};
+const username = body.username;
+const password = body.password;
 
-    const user = await User.findOne({ username: username });
-    if (!user || !user.verifyPassword(password)) {
-        return res.render('login', { message: 'Invalid username or password' });
+console.log("👉 前端輸入 username:", username);
+console.log("👉 前端輸入 password:", password);
+
+const user = await User.findOne({ username: username });
+console.log("👉 查到的 user:", user);
+if (user) {
+    console.log("👉 user.verifyPassword 結果:", user.verifyPassword(password));
+}
+
+if (!user || !user.verifyPassword(password)) {
+return res.render('login', { message: 'Invalid username or password' });
     }
-    if (!user.isVerified) {
-        return res.render('login', { message: 'Email not verified, please complete verification first' });
+if (!user.isVerified) {
+return res.render('login', { message: 'Email not verified, please complete verification first' });
     }
 
-    req.session.user = user.username;
-    req.session.userId = user._id.toString();
-    res.redirect('/preview.html');
+// ✅ 修改這裡！把 role 存入 session
+req.session.user = {
+username: user.username,
+_id: user._id.toString(),
+role: user.role
+};
+res.redirect('/preview.html');
 });
 
 // ---------- Forgot password ----------
@@ -185,26 +197,27 @@ router.get('/forgot-password', (req, res) => {
 });
 
 router.post('/forgot-password', async (req, res) => {
-    try {
-        const email = (req.body || {}).email;
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            return res.render('forgot-password', { message: 'No account found with this email.', success: null });
+try {
+const email = (req.body || {}).email;
+// ADDED .sort({ _id: -1 }) TO RESET PASSWORD FOR THE LATEST ACCOUNT
+const user = await User.findOne({ email: email }).sort({ _id: -1 });
+if (!user) {
+return res.render('forgot-password', { message: 'No account found with this email.', success: null });
         }
 
-        const token = crypto.randomBytes(20).toString('hex');
+const token = crypto.randomBytes(20).toString('hex');
         user.resetPasswordToken = token;
         user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
-        await user.save();
+await user.save();
 
-        const base = process.env.APP_BASE_URL || 'http://localhost:3000';
-        const link = base + '/reset-password/' + token;
-        const sent = await sendMail(email, '[HKMU Second-hand] Password Reset',
-            '<p>Click the link below to reset your password (valid for 1 hour):</p><p><a href="' + link + '">' + link + '</a></p>');
+const base = process.env.APP_BASE_URL || 'http://localhost:3000';
+const link = base + '/reset-password/' + token;
+const sent = await sendMail(email, '[HKMU Second-hand] Password Reset',
+'<p>Click the link below to reset your password (valid for 1 hour):</p><p><a href="' + link + '">' + link + '</a></p>');
 
         res.render('forgot-password', {
-            message: null,
-            success: sent ? 'Password reset email sent.' : 'Mail service not configured, reset link printed to server console.'
+message: null,
+success: sent ? 'Password reset email sent.' : 'Mail service not configured, reset link printed to server console.'
         });
     } catch (err) {
         console.error('Failed to send reset email:', err.message);
@@ -214,34 +227,34 @@ router.post('/forgot-password', async (req, res) => {
 
 // ---------- Reset password helper ----------
 async function findUserByResetToken(token) {
-    return User.findOne({
-        resetPasswordToken: token,
-        resetPasswordExpires: { $gt: new Date() }
+return User.findOne({
+resetPasswordToken: token,
+resetPasswordExpires: { $gt: new Date() }
     });
 }
 
 router.get('/reset-password/:token', async (req, res) => {
-    const user = await findUserByResetToken(req.params.token);
-    if (!user) return res.status(400).send('Invalid or expired reset link');
+const user = await findUserByResetToken(req.params.token);
+if (!user) return res.status(400).send('Invalid or expired reset link');
     res.render('reset-password', { token: req.params.token, message: null });
 });
 
 router.post('/reset-password/:token', async (req, res) => {
-    const body = req.body || {};
-    if (!body.password || body.password !== body.confirmPassword) {
-        return res.render('reset-password', { token: req.params.token, message: 'Passwords do not match.' });
+const body = req.body || {};
+if (!body.password || body.password !== body.confirmPassword) {
+return res.render('reset-password', { token: req.params.token, message: 'Passwords do not match.' });
     }
 
-    const user = await findUserByResetToken(req.params.token);
-    if (!user) return res.status(400).send('Invalid or expired reset link');
+const user = await findUserByResetToken(req.params.token);
+if (!user) return res.status(400).send('Invalid or expired reset link');
 
     user.password = User.hashPassword(body.password);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-    await user.save();
+await user.save();
 
     res.send('<h1 style="text-align:center;margin-top:50px;color:#28a745;">Password updated successfully</h1>' +
-        '<p style="text-align:center;"><a href="/login">Back to login</a></p>');
+'<p style="text-align:center;"><a href="/login">Back to login</a></p>');
 });
 
 // ---------- Logout ----------

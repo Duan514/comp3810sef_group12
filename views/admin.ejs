@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin 管理後台</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Segoe UI, sans-serif;max-width:1000px;margin:24px auto;padding:0 20px;background:#f3f6f8}
+.card{background:#fff;border:1px solid #dce5ea;border-radius:12px;padding:20px;margin-bottom:16px}
+a{color:#006b9f}
+.btn{display:inline-block;padding:7px 12px;border-radius:6px;border:1px solid #006b9f;background:#006b9f;color:#fff;text-decoration:none;margin:4px}
+.btn.danger{background:#9c2929;border-color:#9c2929}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>管理後台</h1>
+<p>管理員：<%= user.username %></p>
+<a href="/list" class="btn">返回市集</a>
+</div>
+<div class="card">
+<h3>管理功能</h3>
+<ul>
+<li>✅ 可以直接在市集頁面編輯、刪除所有用戶的商品</li>
+<li>✅ 可以修改任何商品的售賣狀態</li>
+</ul>
+<p>備註：商品操作直接在市集頁面執行，這裡是管理員入口頁</p>
+</div>
+</body>
+</html>

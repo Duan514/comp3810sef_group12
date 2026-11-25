@@ -11,7 +11,7 @@ process.env.SMTP_HOST = "smtp.qq.com";
 process.env.SMTP_PORT = 465;
 process.env.SMTP_SECURE = true;
 process.env.SMTP_USER = "1056833469@qq.com";
-process.env.SMTP_PASS = "brngatokulrlbfig";
+process.env.SMTP_PASS = "muznvvyyacpbbcgh";
 process.env.MAIL_FROM = "1056833469@qq.com";
 
 if (!process.env.MONGODB_URI) {
