@@ -1,7 +1,7 @@
 // ============================================================================
 // COMP3810SEF Group 12 — Campus Second-hand Market
 // server.js  (single entry point, run with: npm start  /  node server.js)
-// 技术栈: Express (L6) + Mongoose (L5/L6) + EJS (L7) + session (L7) + REST (L8)
+// Tech Stack: Express (L6) + Mongoose (L5/L6) + EJS (L7) + session (L7) + REST (L8)
 // ============================================================================
 
 // ===================== Demo SMTP & MongoDB Config =====================
@@ -18,58 +18,62 @@ if (!process.env.MONGODB_URI) {
   process.env.MONGODB_URI = "mongodb+srv://Cdg111:Chendegao123@cluster0.vxksxkp.mongodb.net/?retryWrites=true&w=majority";
 }
 
-
-
-// Windows 修复: 让 Node 用公共 DNS 解析 "mongodb+srv" 的 SRV 记录，否则在
-// Windows 上会报 ECONNREFUSED / ETIMEOUT。必须放在加载 mongoose 之前。
+// Windows fix: Let Node use public DNS to resolve "mongodb+srv" SRV records, otherwise it will
+// throw ECONNREFUSED / ETIMEOUT on Windows. This must be placed before requiring mongoose.
 //const dns = require('dns');
 //dns.setServers(['8.8.8.8']);
 
-// 读取 .env 里的 MONGODB_URI（环境变量）
+// Read MONGODB_URI from .env (environment variables)
 require('dotenv').config();
 
-// L6: Express —— Node.js 的 MVC Web 框架
+// L6: Express — Node.js MVC Web framework
 const express = require('express');
-// L5/L6: Mongoose —— MongoDB 的 ODM，用 Schema + Model 操作集合
+// L5/L6: Mongoose — MongoDB ODM, operates on collections using Schema + Model
 const mongoose = require('mongoose');
-// L7: express-session —— 中间件，维护登录状态（web session）
+// L7: express-session — Middleware that maintains login state (web session)
 const session = require('express-session');
 
 const Item = require('./models/Item');
-// 必须加载 User 模型：populate('seller') 会按模型名解析 "User" 引用，
-// 不加载这里会报 MissingSchemaError。
+// Must load User model: populate('seller') resolves the "User" reference by model name.
+// Failing to load it will cause a MissingSchemaError.
 require('./models/User');
-const authRouter = require('./routes/auth');   // L6: 认证路由（注册/验证/登录/找回密码）
-const itemsRouter = require('./routes/items'); // L6: 网页 CRUD 路由（list/add/delete）
+const authRouter = require('./routes/auth');   // L6: Auth routes (register/verify/login/forgot password)
+const itemsRouter = require('./routes/items'); // L6: Web CRUD routes (list/add/delete)
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ---------------------------------------------------------------------------
-// L7: 中间件 (middleware) —— 按顺序执行的函数，处理请求/响应
+// L7: Middleware — functions executed in order to process requests/responses
 // ---------------------------------------------------------------------------
-app.set('view engine', 'ejs');                 // L7: 用 EJS 作为模板引擎
-app.use(express.json());                       // L7: 解析 JSON 请求体（REST API 用）
-app.use(express.urlencoded({ extended: true })); // L7: 解析 HTML 表单
+app.set('view engine', 'ejs');                 // L7: Use EJS as the template engine
+app.use(express.json());                       // L7: Parse JSON request bodies (for REST API)
+app.use(express.urlencoded({ extended: true })); // L7: Parse HTML form data
 app.use(express.static('public'));
-app.use(session({                              // L7: 会话中间件
+
+// ✅ Modification: Improved Session configuration, added cookie settings to ensure Cookie is saved properly in local HTTP environment
+app.use(session({                              
   secret: 'my-secret-key',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: { 
+    secure: false, // Must be false for local development using HTTP
+    maxAge: 24 * 60 * 60 * 1000 // Session expiry time: 24 hours (optional)
+  }
 }));
 
 // ---------------------------------------------------------------------------
-// L8: RESTful API —— GET / POST / PUT / DELETE 各一个资源端点（无需鉴权）
-// 状态码语义: 200 成功 / 201 已创建 / 400 请求错误 / 404 不存在
+// L8: RESTful API — One resource endpoint each for GET / POST / PUT / DELETE (no auth required)
+// Status code semantics: 200 Success / 201 Created / 400 Bad Request / 404 Not Found
 // ---------------------------------------------------------------------------
 
-// GET /api/items —— 列出或按条件检索商品 (title / category / minPrice / maxPrice)
+// GET /api/items — List or search items by criteria (title / category / minPrice / maxPrice)
 app.get('/api/items', async (req, res) => {
-  const items = await Item.searchItems(req.query); // L6: Model 的静态方法
+  const items = await Item.searchItems(req.query); // L6: Model's static method
   res.json(items);
 });
 
-// GET /api/items/:id —— 按 id 读取单条（populate 出 seller 的 username/email）
+// GET /api/items/:id — Read a single record by id (populate seller's username/email)
 app.get('/api/items/:id', async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).json({ error: 'Invalid id: ' + req.params.id });
@@ -79,11 +83,11 @@ app.get('/api/items/:id', async (req, res) => {
   res.json(item);
 });
 
-// POST /api/items —— create（白名单字段，防止客户端改 _id / createdAt）
+// POST /api/items — Create (whitelist fields to prevent clients from modifying _id / createdAt)
 app.post('/api/items', async (req, res) => {
   const body = req.body || {};
   
-  // check if seller is a valid ObjectId
+  // Check if seller is a valid ObjectId
   const validSeller = mongoose.Types.ObjectId.isValid(body.seller) ? body.seller : undefined;
 
   const item = await Item.create({
@@ -98,7 +102,7 @@ app.post('/api/items', async (req, res) => {
   res.status(201).location('/api/items/' + item._id).json(item);
 });
 
-// PUT /api/items/:id —— 更新（白名单字段，防止客户端改 _id / createdAt）
+// PUT /api/items/:id — Update (whitelist fields to prevent clients from modifying _id / createdAt)
 const UPDATABLE = ['title', 'description', 'price', 'category', 'condition', 'seller', 'status'];
 
 app.put('/api/items/:id', async (req, res) => {
@@ -116,13 +120,13 @@ app.put('/api/items/:id', async (req, res) => {
   const item = await Item.findByIdAndUpdate( // L6: Model.findByIdAndUpdate()
     req.params.id,
     { $set: updates },
-    { returnDocument: 'after', runValidators: true } // 返回更新后的文档 + 重新校验
+    { returnDocument: 'after', runValidators: true } // Return updated document + re-validate
   );
   if (!item) return res.status(404).json({ error: 'Item not found' });
   res.json(item);
 });
 
-// DELETE /api/items/:id —— 删除商品
+// DELETE /api/items/:id — Delete an item
 app.delete('/api/items/:id', async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).json({ error: 'Invalid id: ' + req.params.id });
@@ -132,24 +136,24 @@ app.delete('/api/items/:id', async (req, res) => {
   res.json({ success: true, message: 'Item deleted', deletedId: item._id });
 });
 
-// 未匹配的 /api/* 路径 -> 404
+// Unmatched /api/* paths -> 404
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Unknown API endpoint: ' + req.method + ' ' + req.originalUrl });
 });
 
 // ---------------------------------------------------------------------------
-// L7: EJS 网页 —— 登录 / 列表 / 新增 / 编辑（用 auth 中间件保护）
+// L7: EJS Web pages — Login / List / Add / Edit (protected by auth middleware)
 // ---------------------------------------------------------------------------
-app.use('/', authRouter);   // 认证路由：/login /register /verify /forgot-password ...
-app.use('/', itemsRouter);  // 网页 CRUD：/list /add /edit /delete-item/:id
+app.use('/', authRouter);   // Auth routes: /login /register /verify /forgot-password ...
+app.use('/', itemsRouter);  // Web CRUD: /list /add /edit /delete-item/:id
 
-// 其余未知路径 -> 404
+// Any other unknown paths -> 404
 app.use((req, res) => {
   res.status(404).type('text/plain').send('404 Not Found: ' + req.method + ' ' + req.originalUrl);
 });
 
 // ---------------------------------------------------------------------------
-// L7: 错误处理中间件（必须 4 个参数）—— 把 Mongoose 校验错误映射为 400
+// L7: Error handling middleware (must take 4 parameters) — maps Mongoose validation errors to 400
 // ---------------------------------------------------------------------------
 app.use((err, req, res, next) => {
   let status = err.status || err.statusCode || 500;
@@ -161,7 +165,7 @@ app.use((err, req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
-// L5: 连接 MongoDB（先连库、再监听，失败时给出清晰报错）
+// L5: Connect to MongoDB (connect to DB first, then listen; give clear error messages on failure)
 // ---------------------------------------------------------------------------
 async function start() {
   const uri = typeof MONGODB_URI !== 'undefined' ? MONGODB_URI : process.env.MONGODB_URI;

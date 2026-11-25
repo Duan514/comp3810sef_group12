@@ -162,33 +162,46 @@ message: sent ? 'Verification code resent' : 'Mail service not configured, code 
 
 // ---------- Login ----------
 router.post('/doLogin', async (req, res) => {
-const body = req.body || {};
-const username = body.username;
-const password = body.password;
+    try {
+        const body = req.body || {};
+        const username = body.username;
+        const password = body.password;
 
-console.log("👉 前端輸入 username:", username);
-console.log("👉 前端輸入 password:", password);
+        console.log("Received login request, user:", username);
 
-const user = await User.findOne({ username: username });
-console.log("👉 查到的 user:", user);
-if (user) {
-    console.log("👉 user.verifyPassword 結果:", user.verifyPassword(password));
-}
+        const user = await User.findOne({ username: username });
+        
+        if (!user || !user.verifyPassword(password)) {
+            console.log("Invalid password or user not found");
+            return res.render('login', { message: 'Invalid username or password' });
+        }
+        if (!user.isVerified) {
+            console.log("Email not verified");
+            return res.render('login', { message: 'Email not verified, please complete verification first' });
+        }
 
-if (!user || !user.verifyPassword(password)) {
-return res.render('login', { message: 'Invalid username or password' });
+        console.log("Password verified, writing to Session...");
+
+        // Safely construct session object to ensure no undefined values
+        req.session.user = {
+            username: user.username,
+            _id: user._id.toString(),
+            role: user.role || 'user' // Prevent session save failure due to undefined role
+        };
+
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save failed (callback error):', err);
+                return res.render('login', { message: 'Session error, please try again.' });
+            }
+            console.log("Session saved successfully! Redirecting to /list");
+            res.redirect('/list');
+        });
+
+    } catch (err) {
+        console.error("Fatal error in login route:", err);
+        res.render('login', { message: 'Server error: ' + err.message });
     }
-if (!user.isVerified) {
-return res.render('login', { message: 'Email not verified, please complete verification first' });
-    }
-
-// ✅ 修改這裡！把 role 存入 session
-req.session.user = {
-username: user.username,
-_id: user._id.toString(),
-role: user.role
-};
-res.redirect('/preview.html');
 });
 
 // ---------- Forgot password ----------
@@ -236,7 +249,7 @@ resetPasswordExpires: { $gt: new Date() }
 router.get('/reset-password/:token', async (req, res) => {
 const user = await findUserByResetToken(req.params.token);
 if (!user) return res.status(400).send('Invalid or expired reset link');
-    res.render('reset-password', { token: req.params.token, message: null });
+res.render('reset-password', { token: req.params.token, message: null });
 });
 
 router.post('/reset-password/:token', async (req, res) => {
@@ -248,18 +261,18 @@ return res.render('reset-password', { token: req.params.token, message: 'Passwor
 const user = await findUserByResetToken(req.params.token);
 if (!user) return res.status(400).send('Invalid or expired reset link');
 
-    user.password = User.hashPassword(body.password);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
+user.password = User.hashPassword(body.password);
+user.resetPasswordToken = undefined;
+user.resetPasswordExpires = undefined;
 await user.save();
 
-    res.send('<h1 style="text-align:center;margin-top:50px;color:#28a745;">Password updated successfully</h1>' +
+res.send('<h1 style="text-align:center;margin-top:50px;color:#28a745;">Password updated successfully</h1>' +
 '<p style="text-align:center;"><a href="/login">Back to login</a></p>');
 });
 
 // ---------- Logout ----------
 router.get('/logout', (req, res) => {
-    req.session.destroy(() => res.redirect('/login'));
+req.session.destroy(() => res.redirect('/login'));
 });
 
 module.exports = router;

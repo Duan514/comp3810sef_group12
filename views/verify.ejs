@@ -16,7 +16,7 @@
             border-top: 5px solid #004a99; text-align: center;
         }
         h2 { color: #004a99; margin-bottom: 10px; }
-        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
         input {
             width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;
             font-size: 18px; text-align: center; letter-spacing: 5px; margin-bottom: 15px;
@@ -40,8 +40,8 @@
 </head>
 <body>
     <div class="box">
-        <h2>📧 验证您的邮箱</h2>
-        <p>我们已向 <strong><%= email %></strong> 发送了 6 位验证码。<br>请检查收件箱或【垃圾邮件】文件夹。</p>
+        <h2>📧 Verify Your Email</h2>
+        <p>We have sent a 6-digit verification code to <strong><%= email %></strong>.<br>Please check your inbox or the "Spam" folder.</p>
         
         <% if (message) { %>
             <div class="error"><%= message %></div>
@@ -49,12 +49,12 @@
 
         <form action="/doVerify" method="POST">
             <input type="hidden" name="email" value="<%= email %>">
-            <input type="text" name="code" placeholder="请输入6位验证码" maxlength="6" required autocomplete="off">
-            <button type="submit">验证并激活账号</button>
+            <input type="text" name="code" placeholder="Enter 6-digit code" maxlength="6" required autocomplete="off">
+            <button type="submit">Verify and Activate Account</button>
         </form>
 
-        <!-- 重发按钮 -->
-        <button class="resend-btn" id="resendBtn" onclick="resendCode()">没收到验证码？重新发送</button>
+        <!-- Resend button -->
+        <button class="resend-btn" id="resendBtn" onclick="resendCode()">Didn't receive the code? Resend</button>
     </div>
 
     <script>
@@ -66,25 +66,25 @@
         function startCountdown() {
             countdown = 60;
             resendBtn.disabled = true;
-            resendBtn.innerText = `重新发送 (${countdown}s)`;
+            resendBtn.innerText = `Resend in (${countdown}s)`;
             
             timer = setInterval(() => {
                 countdown--;
                 if (countdown > 0) {
-                    resendBtn.innerText = `重新发送 (${countdown}s)`;
+                    resendBtn.innerText = `Resend in (${countdown}s)`;
                 } else {
                     clearInterval(timer);
                     resendBtn.disabled = false;
-                    resendBtn.innerText = '没收到验证码？重新发送';
+                    resendBtn.innerText = 'Didn\'t receive the code? Resend';
                 }
             }, 1000);
         }
 
         async function resendCode() {
-            if (countdown > 0) return; // 倒计时期间禁止点击
+            if (countdown > 0) return; // Prevent clicking during countdown
 
             try {
-                // 使用 application/x-www-form-urlencoded 格式发送，兼容性最好
+                // Send using application/x-www-form-urlencoded format for best compatibility
                 const response = await fetch('/resend-code', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -93,13 +93,13 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('✅ 验证码已重新发送，请查收邮件！');
-                    startCountdown(); // 成功后开始 60 秒倒计时
+                    alert('✅ Verification code resent, please check your email!');
+                    startCountdown(); // Start 60s countdown on success
                 } else {
                     alert('❌ ' + data.message);
                 }
             } catch (error) {
-                alert('❌ 网络错误，请稍后再试');
+                alert('❌ Network error, please try again later');
             }
         }
     </script>
