@@ -128,7 +128,7 @@ app.use((req, res) => {
 
 
 //Handle error
-use((err, req, res, next) => {
+app.use((err, req, res, next) => {
   let status = err.status || err.statusCode || 500;
   if (err.name === 'ValidationError' || err.name === 'CastError') status = 400;
   if (err.type === 'entity.parse.failed') { status = 400; err.message = 'Invalid JSON body'; }
