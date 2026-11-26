@@ -40,7 +40,7 @@ University students may need to buy or sell used learning materials and daily ne
 | Fong Ka Yan | 14043152 | Project Manager and Backend. Responsible for `server.js`, RESTful APIs, README, and overall integration. |
 | DuDixi | 13388549 | Database Management. Responsible for Mongoose models and data seeding. |
 | CHEN Degao | 14240946 | Authentication and Security. Responsible for MongoDB connection, EJS templates, login/logout, sessions, verification, and password recovery. |
-| WANG Mengyu | 13398402 |  UI/UX Frontend. Responsible for marketplace presentation. |
+| WANG Mengyu | 13398402 |  UI/UX Frontend. Responsible for marketplace presentation HTML. |
 | Tong Tsam Ying | 14614205 | Responsible for setting up Ubuntu/cloud environments, conducting cURL/API testing, and troubleshooting/fixing issues. Edit the content of readme.md |
 | ZHOU KEYU | 13235951 | Web CRUD Interaction. Responsible for connecting forms and UI actions to database operations. |
 
