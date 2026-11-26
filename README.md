@@ -128,7 +128,7 @@ The `views` folder contains the application's EJS pages:
 
 ### Setup and Installation
 
-1. GitDown or clone the project from GitHub: 'https://github.com/Duan514/comp3810sef_group12'.
+1. Open fodle 'models' --> go to 'seed.js'. Copy your MongoDB URL in 'process.env.MONGODB_URI=...'.
 2. On Ubuntu, open a terminal and enter the project folder:
    ```bash
    cd <project-folder>
