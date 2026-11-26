@@ -1,3 +1,8 @@
+//This file defines the Mongoose schema for the Item model, which represents an item in the marketplace. 
+//It includes fields for title, description, price, category, condition, seller, and status. 
+// The schema also includes a static method searchItems that allows searching for items based on various query parameters such as title, category, price range, and seller. 
+// The method returns a list of items that match the specified criteria and populates the seller field with the corresponding user information.
+
 const mongoose = require('mongoose');
 
 const itemSchema = new mongoose.Schema({

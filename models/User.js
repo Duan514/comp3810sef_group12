@@ -1,3 +1,5 @@
+// This file defines the Mongoose schema for the User model, which represents a user in the application.
+
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 

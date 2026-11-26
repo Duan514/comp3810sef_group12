@@ -1,3 +1,8 @@
+//This script is used to test the connection to the MongoDB database using Mongoose. 
+// It reads the MongoDB URI from the .env file and attempts to connect to the database. 
+// If the connection is successful, it logs a success message; 
+// if it fails, it logs an error message and exits the process.
+
 const dns = require('dns');
 // Force Node.js to use Google's public DNS to resolve addresses, fixing the ECONNREFUSED error on Windows.
 dns.setServers(['8.8.8.8', '8.8.4.4']); 
