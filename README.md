@@ -132,6 +132,7 @@ The `views` folder contains the application's EJS pages:
 2. On Ubuntu, open a terminal and enter the project folder:
    ```bash
    cd <project-folder>
+   cd ~/comp3810sef_group12-main
    ```
 3. Run the prepared demo seed script:
    ```bash
