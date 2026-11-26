@@ -139,6 +139,7 @@ The `views` folder contains the application's EJS pages:
    ```
 4. Start the prepared application:
    ```bash
+   npm ci
    npm start
    ```
 5. Wait until the terminal displays the server address and MongoDB connection message.
