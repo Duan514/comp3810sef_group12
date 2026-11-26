@@ -133,14 +133,18 @@ The `views` folder contains the application's EJS pages:
    ```bash
    cd <project-folder>
    ```
-3. Start the prepared application:
+3. Run the prepared demo seed script:
+   ```bash
+   node models/seed.js
+   ```
+4. Start the prepared application:
    ```bash
    npm start
    ```
-4. Wait until the terminal displays the server address and MongoDB connection message.
-5. Open `http://localhost:3000/login` in a browser on the same machine.
+5. Wait until the terminal displays the server address and MongoDB connection message.
+6. Open `http://localhost:3000/login` in a browser on the same machine.
 
-The MongoDB database and demo seed script have already been prepared. Start the application directly without recreating the `.env` file or rerunning `npm run seed`.
+The MongoDB database and demo seed script have already been prepared. Run the demo seed script above before starting the application; do not recreate the `.env` file or run `npm run seed`.
 
 ### Use of Login/Logout Pages
 
