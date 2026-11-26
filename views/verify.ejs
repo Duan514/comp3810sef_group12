@@ -43,7 +43,7 @@
 </head>
 <body>
     <div class="box">
-        <h2>📧 Verify Your Email</h2>
+        <h2>Verify Your Email</h2>
         <p>We have sent a 6-digit verification code to <strong><%= email %></strong>.<br>Please check your inbox or the "Spam" folder.</p>
         
         <% if (message) { %>
@@ -96,7 +96,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('✅ Verification code resent, please check your email!');
+                    alert('Verification code resent, please check your email!');
                     startCountdown(); // Start 60s countdown on success
                 } else {
                     alert('❌ ' + data.message);
