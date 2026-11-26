@@ -18,7 +18,6 @@ University students may need to buy or sell used learning materials and daily ne
 3. Other students browse the marketplace or search for items by title, category, and price.
 4. The seller edits the item, marks it as sold or available again, or deletes it.
 5. An administrator can also manage listings.
-6. External clients can test item operations through the RESTful API.
 
 ### Main Features
 
