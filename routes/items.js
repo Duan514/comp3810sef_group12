@@ -27,7 +27,7 @@ router.get('/list', async (req, res) => {
   }
 
   const view = req.query.view === 'mine' ? 'mine' : 'market';
-  // ✅ 默认语言改为英文 'en'
+  // default language is 'en'
   const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   
   const filters = {
@@ -79,7 +79,7 @@ router.get('/list', async (req, res) => {
 router.get('/add', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  // ✅ 默认语言改为英文 'en'
+
   const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   renderMarket(req, res, {
     username: currentUser.username,
@@ -94,7 +94,7 @@ router.get('/add', async (req, res) => {
 router.post('/add', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  // ✅ 默认语言改为英文 'en'
+
   const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   const { title, description, price, category, condition } = req.body;
   const fieldErrors = {};
@@ -140,7 +140,7 @@ router.post('/add', async (req, res) => {
 router.get('/edit/:id', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  // ✅ 默认语言改为英文 'en'
+
   const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   
   const item = await Item.findById(req.params.id).populate('seller');
@@ -163,7 +163,7 @@ router.get('/edit/:id', async (req, res) => {
 router.post('/edit/:id', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  // ✅ 默认语言改为英文 'en'
+
   const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   const { title, description, price, category, condition } = req.body;
   const fieldErrors = {};
@@ -213,7 +213,7 @@ router.post('/edit/:id', async (req, res) => {
 router.post('/items/:id/status', async (req, res) => {
   const currentUser = req.session.user;
   if (!currentUser) return res.redirect('/login');
-  // ✅ 默认语言改为英文 'en'
+
   const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
   const { status } = req.body;
   if (!['Available','Sold'].includes(status)) return res.status(400).send('Invalid status');
@@ -233,7 +233,7 @@ router.post('/delete-item/:id', async (req, res) => {
   try {
     const currentUser = req.session.user;
     if (!currentUser) return res.redirect('/login');
-    // ✅ 默认语言改为英文 'en'
+
     const lang = req.query.lang === 'zh' ? 'zh' : 'en'; 
     
     const item = await Item.findById(req.params.id);
