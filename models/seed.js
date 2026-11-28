@@ -16,11 +16,11 @@ const User = require('./User');
 const Item = require('./Item');
 
 mongoose.connect(process.env.MONGODB_URI).then(async () => {
-console.log("⏳ Connected to MongoDB. Clearing old data...");
+console.log(" Connected to MongoDB. Clearing old data...");
 await User.deleteMany({});
 await Item.deleteMany({});
 
-// ========== Admin account（username: admin，password:123123，role:admin） ==========
+// Admin account（username: admin，password:123123，role:admin）
 const adminUser = await User.create({
   username: 'admin',
   password: User.hashPassword('123123'),
@@ -30,9 +30,9 @@ const adminUser = await User.create({
 });
 
 
-    console.log("✅ Data seeding completed successfully!");
+    console.log("Data seeding completed successfully!");
     mongoose.disconnect();
 }).catch(err => {
-    console.error("❌ Seeding failed:", err.message);
+    console.error("Seeding failed:", err.message);
     process.exit(1);
 });
