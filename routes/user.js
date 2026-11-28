@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     isVerified: { type: Boolean, default: false }, 
     verificationCode: { type: String }, 
     
-    // --- New fields for Forgot Password ---
+    // New fields for Forgot Password
     resetPasswordToken: { type: String }, 
     resetPasswordExpires: { type: Date },
 
