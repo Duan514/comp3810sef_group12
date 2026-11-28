@@ -5,7 +5,7 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// ---------- Mail sender (lazy load nodemailer) ----------
+// Mail sender (lazy load nodemailer)
 let nodemailer = null;
 try {
     nodemailer = require('nodemailer');
@@ -63,12 +63,12 @@ function sixDigitCode() {
 return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-// ---------- Page routes ----------
+// Page routes 
 router.get('/', (req, res) => res.redirect('/login'));
 router.get('/login', (req, res) => res.render('login', { message: null }));
 router.get('/register', (req, res) => res.render('register', { message: null }));
 
-// ---------- Register ----------
+// Register
 router.post('/doRegister', async (req, res) => {
 const body = req.body || {};
 const username = body.username;
@@ -104,7 +104,7 @@ await sendMail(email, '[HKMU Second-hand] Registration Verification Code',
     }
 });
 
-// ---------- Email verification page ----------
+// Email verification page
 router.get('/verify', (req, res) => {
     res.render('verify', { email: req.query.email, message: null });
 });
@@ -133,7 +133,7 @@ await user.save();
     res.redirect('/login');
 });
 
-// ---------- Resend verification code ----------
+// Resend verification code 
 router.post('/resend-code', async (req, res) => {
 try {
 const email = (req.body || {}).email;
@@ -160,7 +160,7 @@ message: sent ? 'Verification code resent' : 'Mail service not configured, code 
     }
 });
 
-// ---------- Login ----------
+// Login 
 router.post('/doLogin', async (req, res) => {
     try {
         const body = req.body || {};
@@ -204,7 +204,7 @@ router.post('/doLogin', async (req, res) => {
     }
 });
 
-// ---------- Forgot password ----------
+// Forgot password
 router.get('/forgot-password', (req, res) => {
     res.render('forgot-password', { message: null, success: null });
 });
@@ -238,7 +238,7 @@ success: sent ? 'Password reset email sent.' : 'Mail service not configured, res
     }
 });
 
-// ---------- Reset password helper ----------
+// Reset password helper
 async function findUserByResetToken(token) {
 return User.findOne({
 resetPasswordToken: token,
@@ -270,7 +270,7 @@ res.send('<h1 style="text-align:center;margin-top:50px;color:#28a745;">Password 
 '<p style="text-align:center;"><a href="/login">Back to login</a></p>');
 });
 
-// ---------- Logout ----------
+// Logout 
 router.get('/logout', (req, res) => {
 req.session.destroy(() => res.redirect('/login'));
 });
